@@ -1,0 +1,14 @@
+# Xcode
+build/
+DerivedData/
+*.xcuserstate
+*.xcworkspace/xcshareddata/SwiftPM/
+
+# Python
+venv/
+__pycache__/
+*.py[cod]
+.env
+
+# macOS
+.DS_Store
