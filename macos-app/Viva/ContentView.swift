@@ -3,6 +3,18 @@ import AVFoundation
 import AppKit
 import Combine
 
+private struct VivaResponse: Decodable {
+    let text: String
+    let processingTime: Double?
+    let usedScreenshot: Bool?
+
+    private enum CodingKeys: String, CodingKey {
+        case text
+        case processingTime = "processing_time"
+        case usedScreenshot = "used_screenshot"
+    }
+}
+
 // MARK: - Helper to convert NSImage to JPEG Data
 extension NSImage {
     var jpegData: Data? {
@@ -64,6 +76,7 @@ struct ContentView: View {
     @State private var isTranscribing = false
     @State private var isSendingToAI = false
     @State private var shareScreen: Bool = false
+    @State private var agentResponse: String = ""
     
     // Allows us to auto-focus the text field so the cursor blinks immediately
     @FocusState private var isFocused: Bool
@@ -182,6 +195,24 @@ struct ContentView: View {
                 )
                 .transition(.move(edge: .top).combined(with: .opacity))
             }
+
+            if !agentResponse.isEmpty {
+                Text(agentResponse)
+                    .font(.callout)
+                    .foregroundColor(.primary)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 12)
+                    .background(
+                        RoundedRectangle(cornerRadius: 14)
+                            .fill(.ultraThinMaterial)
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14)
+                            .strokeBorder(Color.gray.opacity(0.2), lineWidth: 1)
+                    )
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
             
             // Hidden Shortcut
             Button(action: { isRecording ? stopRecording() : startRecording() }) { Text("") }
@@ -221,17 +252,37 @@ struct ContentView: View {
     }
 
     func sendToAI() {
-        guard !textInput.isEmpty else { return }
-        let currentText = textInput
+        let currentText = textInput.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !currentText.isEmpty else { return }
         
         Task {
-            isSendingToAI = true
+            await MainActor.run {
+                isSendingToAI = true
+                agentResponse = ""
+            }
+
+            defer {
+                Task { @MainActor in
+                    isSendingToAI = false
+                }
+            }
+
             var screenshot: NSImage? = nil
             if shareScreen {
                 screenshot = try? await ScreenShotManager.captureMainDisplay()
             }
-            
-            sendFinalPayloadToAI(text: currentText, image: screenshot)
+
+            do {
+                let response = try await sendFinalPayloadToAI(text: currentText, image: screenshot)
+                await MainActor.run {
+                    textInput = ""
+                    agentResponse = response.text
+                }
+            } catch {
+                await MainActor.run {
+                    agentResponse = "Viva request failed: \(error.localizedDescription)"
+                }
+            }
         }
     }
 
@@ -281,7 +332,7 @@ struct ContentView: View {
 
     // MARK: - Networking Phase 2: AI Processing
     
-    func sendFinalPayloadToAI(text: String, image: NSImage?) {
+    private func sendFinalPayloadToAI(text: String, image: NSImage?) async throws -> VivaResponse {
         let url = URL(string: "http://127.0.0.1:8000/viva")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -306,12 +357,14 @@ struct ContentView: View {
         
         body.append("--\(boundary)--\r\n".data(using: .utf8)!)
         request.httpBody = body
-        
-        URLSession.shared.dataTask(with: request) { data, _, _ in
-            DispatchQueue.main.async {
-                self.isSendingToAI = false
-                self.textInput = ""
-            }
-        }.resume()
+
+        let (data, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              200..<300 ~= httpResponse.statusCode else {
+            throw URLError(.badServerResponse)
+        }
+
+        return try JSONDecoder().decode(VivaResponse.self, from: data)
     }
 }

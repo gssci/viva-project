@@ -5,7 +5,14 @@ description = "Add your description here"
 readme = "README.md"
 requires-python = ">=3.13"
 dependencies = [
+    "duckduckgo-search>=8.1.1",
     "fastapi>=0.136.0",
-    "mlx-audio>=0.4.2",
+    "geocoder>=1.38.1",
+    "langchain>=1.0.0",
+    "langchain-openai>=1.0.0",
+    "mlx-whisper>=0.4.2",
+    "python-multipart>=0.0.20",
+    "requests>=2.32.3",
+    "trafilatura>=2.0.0",
     "uvicorn>=0.44.0",
 ]

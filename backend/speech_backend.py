@@ -1,13 +1,16 @@
+import asyncio
+import logging
 import os
 import tempfile
 import time
-import logging
 from contextlib import asynccontextmanager
 
-import numpy as np
-from fastapi import FastAPI, UploadFile, File
-import uvicorn
 import mlx_whisper
+import numpy as np
+import uvicorn
+from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+
+from purolang import PuroLangService
 
 # --- 1. Setup Logging ---
 logging.basicConfig(
@@ -21,30 +24,78 @@ logger = logging.getLogger(__name__)
 # but keeping your requested name)
 MODEL_REPO = "mlx-community/whisper-large-v3-mlx"
 
+
+def _warm_up_whisper_model() -> None:
+    dummy_audio = np.zeros(16000, dtype=np.float32)
+    mlx_whisper.transcribe(dummy_audio, path_or_hf_repo=MODEL_REPO)
+
+
+def _transcribe_audio_file(temp_audio_path: str) -> dict:
+    return mlx_whisper.transcribe(
+        temp_audio_path,
+        path_or_hf_repo=MODEL_REPO,
+        verbose=True,
+    )
+
 # --- 2. Startup Event (Model Pre-loading) ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logger.info(f"Server initializing. Pre-loading model '{MODEL_REPO}' into Apple Silicon unified memory...")
     start_time = time.time()
-    
-    # "Warm-up" run: Transcribing 1 second of silent audio forces MLX to 
-    # download the model and load the computation graph into memory cache.
-    dummy_audio = np.zeros(16000, dtype=np.float32)
-    mlx_whisper.transcribe(dummy_audio, path_or_hf_repo=MODEL_REPO)
-    
+
+    # Warm up Whisper off the event loop and initialize the LangChain agent once.
+    await asyncio.to_thread(_warm_up_whisper_model)
+    app.state.viva_service = PuroLangService()
+    await app.state.viva_service.initialize()
+
     logger.info(f"Model successfully loaded and cached in {time.time() - start_time:.2f} seconds.")
     logger.info("Server is ready to accept requests!")
     yield
-    
-    # Teardown logic (if any) goes here
+
     logger.info("Server shutting down.")
 
 # Initialize FastAPI with the lifespan context
 app = FastAPI(lifespan=lifespan)
 
 @app.post("/viva")
-async def viva(text: str, screenshot: str = None):
-    logger.info(f"Received request for viva: {text}")
+async def viva(
+    request: Request,
+    text: str = Form(...),
+    screenshot: UploadFile | None = File(default=None),
+):
+    clean_text = text.strip()
+    if not clean_text:
+        raise HTTPException(status_code=400, detail="The 'text' field is required.")
+
+    screenshot_bytes: bytes | None = None
+    if screenshot is not None:
+        screenshot_bytes = await screenshot.read()
+
+    logger.info(
+        "Received Viva request. text_length=%s screenshot=%s",
+        len(clean_text),
+        bool(screenshot_bytes),
+    )
+
+    start_time = time.time()
+    try:
+        response_text = await request.app.state.viva_service.run(
+            text=clean_text,
+            screenshot_bytes=screenshot_bytes,
+            screenshot_content_type=screenshot.content_type if screenshot else None,
+            screenshot_filename=screenshot.filename if screenshot else None,
+        )
+    except Exception as exc:
+        logger.exception("Viva request failed: %s", exc)
+        raise HTTPException(status_code=500, detail="Viva backend request failed.") from exc
+
+    process_duration = time.time() - start_time
+    logger.info("Viva response generated in %.2f seconds.", process_duration)
+    return {
+        "text": response_text,
+        "processing_time": round(process_duration, 2),
+        "used_screenshot": bool(screenshot_bytes),
+    }
 
 @app.post("/transcribe")
 async def transcribe(file: UploadFile = File(...)):
@@ -61,11 +112,7 @@ async def transcribe(file: UploadFile = File(...)):
         # --- 3. Verbose Inference & Language Detection ---
         # verbose=True forces whisper to log chunk processing
         # Language is automatically detected by Whisper if not specified
-        output = mlx_whisper.transcribe(
-            temp_audio_path,
-            path_or_hf_repo=MODEL_REPO,
-            verbose=True
-        )
+        output = await asyncio.to_thread(_transcribe_audio_file, temp_audio_path)
         
         process_duration = time.time() - start_time
         
