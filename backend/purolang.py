@@ -11,6 +11,7 @@ from duckduckgo_search import DDGS
 from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_openai import ChatOpenAI
+from common_task_tools import all_mac_tools
 
 logger = logging.getLogger(__name__)
 
@@ -126,27 +127,15 @@ async def get_weather(lat: float, lon: float) -> str:
         return f"Errore nel recupero del meteo: {exc}"
 
 
-@tool
-async def set_timer(seconds: int, message: str) -> str:
-    """Imposta un timer. Usa questo per ricordare cose all'utente in futuro."""
-
-    async def timer_task() -> None:
-        await asyncio.sleep(seconds)
-        logger.info("Timer scaduto: %s", message)
-
-    asyncio.create_task(timer_task())
-    return f"Timer impostato correttamente. Suonera tra {seconds} secondi."
-
-
 TOOLS = [
     get_current_datetime,
     get_gps_location,
     web_search,
     extract_webpage_text,
     get_weather,
-    set_timer,
 ]
 
+TOOLS.extend(all_mac_tools)
 
 class PuroLangService:
     def __init__(self) -> None:
