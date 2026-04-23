@@ -7,7 +7,7 @@ from typing import Any
 import geocoder
 import requests
 import trafilatura
-from duckduckgo_search import DDGS
+from ddgs import DDGS
 from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_openai import ChatOpenAI
@@ -22,7 +22,7 @@ OLLAMA_API_KEY = os.getenv("VIVA_OLLAMA_API_KEY", "ollama")
 SYSTEM_PROMPT = (
     "Sei Viva, un assistente utile, conciso e orientato all'azione. "
     "Usa i tool quando servono davvero. "
-    "Se ti viene chiesto il meteo e non hai gia le coordinate, ottienile prima tramite GPS."
+    "Fornisci risposte brevi all'utente di massimo una frase."
 )
 
 
@@ -56,7 +56,7 @@ def _extract_response_text(response: dict[str, Any]) -> str:
 
 
 def _get_gps_location_blocking() -> str:
-    g = geocoder.ip("me")
+    g = geocoder.ip()
     if g.ok:
         return f"Latitudine: {g.lat}, Longitudine: {g.lng}, Citta: {g.city}"
     return "Impossibile determinare la posizione GPS."
@@ -92,15 +92,6 @@ async def get_current_datetime() -> str:
 
 
 @tool
-async def get_gps_location() -> str:
-    """Ottiene la posizione GPS approssimativa basata sull'indirizzo IP locale."""
-    try:
-        return await asyncio.to_thread(_get_gps_location_blocking)
-    except Exception as exc:
-        return f"Errore nel recupero della posizione GPS: {exc}"
-
-
-@tool
 async def web_search(query: str, max_results: int = 5) -> str:
     """Effettua una ricerca sul web e restituisce i risultati principali."""
     try:
@@ -129,7 +120,6 @@ async def get_weather(lat: float, lon: float) -> str:
 
 TOOLS = [
     get_current_datetime,
-    get_gps_location,
     web_search,
     extract_webpage_text,
     get_weather,
