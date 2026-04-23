@@ -2,7 +2,6 @@ from trafilatura import fetch_url, extract
 from trafilatura.settings import Extractor
 from mlx_audio.tts.generate import generate_audio
 from langdetect import detect, lang_detect_exception
-from main import remove_markdown_formatting
 
 def rileva_lingua_veloce(testo: str) -> str:
     """
@@ -68,21 +67,3 @@ def read_this(text):
             play=True,
             stream=True,
         )
-
-
-if __name__ == "__main__":
-    # url = "https://www.perplexity.ai/search/quanto-e-accurato-veramente-il-Zg6XwV4iTcmi2qHgOgVHxQ"
-    # read_this(url)
-
-    # md = "text/Quanto è accurato veramente il film The Apprentice.md"
-    # with open(md, "r") as fb:
-    #     text = fb.read()
-    
-    # text = remove_markdown_formatting(text)
-
-    # url = "https://openai.com/index/understanding-neural-networks-through-sparse-circuits/"
-    # text = extract_readable_text_from_url(url)
-    text = """Capisco perfettamente come ti senti. È frustrante sentirsi bloccati in una situazione difficile, soprattutto quando si è provato di tutto. Sembra che tu stia lottando con un senso di disperazione e mancanza di motivazione nello smart working.
-
-È importante ricordare che non sei solo in questa situazione e che chiedere aiuto è un segno di forza. Forse potresti considerare di parlare con un professionista della salute mentale per esplorare più a fondo queste sensazioni e trovare strategie personalizzate che possano aiutarti. Non arrenderti, ci sono risorse disponibili per supportarti."""
-    read_this(text)

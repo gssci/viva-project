@@ -11,7 +11,7 @@ from ddgs import DDGS
 from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_openai import ChatOpenAI
-from common_task_tools import all_mac_tools
+from agent_tools.applescript_tools import all_mac_tools
 
 logger = logging.getLogger(__name__)
 
