@@ -128,6 +128,8 @@ struct ContentView: View {
     @State private var isSendingToAI = false
     @State private var shareScreen: Bool = false
     @State private var agentResponse: String = ""
+    @State private var aiRequestTask: Task<Void, Never>?
+    @State private var activeVivaRequestID: String?
     
     // Allows us to auto-focus the text field so the cursor blinks immediately
     @FocusState private var isFocused: Bool
@@ -188,19 +190,20 @@ struct ContentView: View {
                     .disabled(isTranscribing || isSendingToAI)
                 
                 // 4. Send Button
-                Button(action: { sendToAI() }) {
+                Button(action: { isSendingToAI ? cancelAIRequest() : sendToAI() }) {
                     ZStack {
                         Circle()
-                            .fill(textInput.isEmpty ? Color.gray.opacity(0.15) : Color.blue)
+                            .fill(isSendingToAI ? Color.red : (textInput.isEmpty ? Color.gray.opacity(0.15) : Color.blue))
                         
-                        Image(systemName: "arrow.up")
+                        Image(systemName: isSendingToAI ? "xmark" : "arrow.up")
                             .font(.system(size: 14, weight: .bold))
-                            .foregroundColor(textInput.isEmpty ? .primary.opacity(0.4) : .white)
+                            .foregroundColor(isSendingToAI || !textInput.isEmpty ? .white : .primary.opacity(0.4))
                     }
                     .frame(width: 32, height: 32)
                 }
                 .buttonStyle(.plain)
-                .disabled(textInput.isEmpty || isTranscribing || isSendingToAI)
+                .disabled((textInput.isEmpty && !isSendingToAI) || isTranscribing)
+                .help(isSendingToAI ? "Cancel Request" : "Send")
             }
             .padding(8)
             .background(
@@ -304,18 +307,24 @@ struct ContentView: View {
 
     func sendToAI() {
         let currentText = textInput.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !currentText.isEmpty else { return }
+        guard !currentText.isEmpty, !isSendingToAI else { return }
+        let requestID = UUID().uuidString
         
-        Task {
+        aiRequestTask = Task {
             await MainActor.run {
                 isSendingToAI = true
+                activeVivaRequestID = requestID
                 agentResponse = ""
                 responseAudioPlayer.stop()
             }
 
             defer {
                 Task { @MainActor in
-                    isSendingToAI = false
+                    if activeVivaRequestID == requestID {
+                        isSendingToAI = false
+                        activeVivaRequestID = nil
+                        aiRequestTask = nil
+                    }
                 }
             }
 
@@ -325,7 +334,9 @@ struct ContentView: View {
             }
 
             do {
-                let response = try await sendFinalPayloadToAI(text: currentText, image: screenshot)
+                try Task.checkCancellation()
+                let response = try await sendFinalPayloadToAI(text: currentText, image: screenshot, requestID: requestID)
+                try Task.checkCancellation()
                 await MainActor.run {
                     textInput = ""
                     agentResponse = response.text
@@ -339,9 +350,25 @@ struct ContentView: View {
                     await responseAudioPlayer.play(from: audioURL)
                 }
             } catch {
+                let wasCancelled = Task.isCancelled || (error as? URLError)?.code == .cancelled
                 await MainActor.run {
-                    agentResponse = "Viva request failed: \(error.localizedDescription)"
+                    agentResponse = wasCancelled ? "Request cancelled." : "Viva request failed: \(error.localizedDescription)"
                 }
+            }
+        }
+    }
+
+    func cancelAIRequest() {
+        guard isSendingToAI, let requestID = activeVivaRequestID else { return }
+
+        responseAudioPlayer.stop()
+        aiRequestTask?.cancel()
+
+        Task {
+            do {
+                try await cancelVivaRequest(requestID: requestID)
+            } catch {
+                print("Cancel Request Error: \(error.localizedDescription)")
             }
         }
     }
@@ -382,7 +409,14 @@ struct ContentView: View {
                 }
                 
                 if let data = data, let json = try? JSONSerialization.jsonObject(with: data) as? [String: Any], let text = json["text"] as? String {
-                    self.textInput = text
+                    let transcribedText = text.trimmingCharacters(in: .whitespacesAndNewlines)
+                    self.textInput = transcribedText
+
+                    if !transcribedText.isEmpty {
+                        DispatchQueue.main.async {
+                            self.sendToAI()
+                        }
+                    }
                 } else {
                     self.textInput = "Could not parse transcription."
                 }
@@ -392,7 +426,7 @@ struct ContentView: View {
 
     // MARK: - Networking Phase 2: AI Processing
     
-    private func sendFinalPayloadToAI(text: String, image: NSImage?) async throws -> VivaResponse {
+    private func sendFinalPayloadToAI(text: String, image: NSImage?, requestID: String) async throws -> VivaResponse {
         let url = URL(string: "http://127.0.0.1:8000/viva")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
@@ -403,6 +437,10 @@ struct ContentView: View {
         var body = Data()
         let boundaryPrefix = "--\(boundary)\r\n"
         
+        body.append(boundaryPrefix.data(using: .utf8)!)
+        body.append("Content-Disposition: form-data; name=\"request_id\"\r\n\r\n".data(using: .utf8)!)
+        body.append("\(requestID)\r\n".data(using: .utf8)!)
+
         body.append(boundaryPrefix.data(using: .utf8)!)
         body.append("Content-Disposition: form-data; name=\"text\"\r\n\r\n".data(using: .utf8)!)
         body.append("\(text)\r\n".data(using: .utf8)!)
@@ -426,5 +464,18 @@ struct ContentView: View {
         }
 
         return try JSONDecoder().decode(VivaResponse.self, from: data)
+    }
+
+    private func cancelVivaRequest(requestID: String) async throws {
+        let url = URL(string: "http://127.0.0.1:8000/viva/cancel/\(requestID)")!
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+
+        let (_, response) = try await URLSession.shared.data(for: request)
+
+        guard let httpResponse = response as? HTTPURLResponse,
+              200..<300 ~= httpResponse.statusCode else {
+            throw URLError(.badServerResponse)
+        }
     }
 }

@@ -3,6 +3,7 @@ import logging
 import os
 import tempfile
 import time
+import uuid
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -13,7 +14,7 @@ from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.staticfiles import StaticFiles
 
 from langchain_agent import VivaAgentService
-from tts_tools import DEFAULT_OUTPUT_DIR, VivaTTSService
+from tools.tts_tools import DEFAULT_OUTPUT_DIR, VivaTTSService
 
 # --- 1. Setup Logging ---
 logging.basicConfig(
@@ -50,6 +51,8 @@ async def lifespan(app: FastAPI):
     app.state.viva_service = VivaAgentService()
     await app.state.viva_service.initialize()
     app.state.tts_service = VivaTTSService(output_dir=TTS_OUTPUT_DIR)
+    app.state.active_viva_tasks = {}
+    app.state.active_viva_task_lock = asyncio.Lock()
 
     if os.getenv("VIVA_TTS_WARMUP", "0") == "1":
         logger.info("Pre-loading TTS model into memory...")
@@ -69,22 +72,43 @@ app.mount(
     name="generated-audio",
 )
 
+async def _clear_active_viva_task(
+    request: Request,
+    request_id: str,
+    task: asyncio.Task | None,
+) -> None:
+    async with request.app.state.active_viva_task_lock:
+        if request.app.state.active_viva_tasks.get(request_id) is task:
+            del request.app.state.active_viva_tasks[request_id]
+
 @app.post("/viva")
 async def viva(
     request: Request,
     text: str = Form(...),
+    request_id: str | None = Form(default=None),
     screenshot: UploadFile | None = File(default=None),
 ):
     clean_text = text.strip()
     if not clean_text:
         raise HTTPException(status_code=400, detail="The 'text' field is required.")
 
+    viva_request_id = (request_id or str(uuid.uuid4())).strip()
+    if not viva_request_id:
+        raise HTTPException(status_code=400, detail="The 'request_id' field cannot be empty.")
+
+    current_task = asyncio.current_task()
+    async with request.app.state.active_viva_task_lock:
+        if viva_request_id in request.app.state.active_viva_tasks:
+            raise HTTPException(status_code=409, detail="A Viva request with this id is already active.")
+        request.app.state.active_viva_tasks[viva_request_id] = current_task
+
     screenshot_bytes: bytes | None = None
     if screenshot is not None:
         screenshot_bytes = await screenshot.read()
 
     logger.info(
-        "Received Viva request. text_length=%s screenshot=%s",
+        "Received Viva request. request_id=%s text_length=%s screenshot=%s",
+        viva_request_id,
         len(clean_text),
         bool(screenshot_bytes),
     )
@@ -97,7 +121,14 @@ async def viva(
             screenshot_content_type=screenshot.content_type if screenshot else None,
             screenshot_filename=screenshot.filename if screenshot else None,
         )
+        if current_task is not None and current_task.cancelling():
+            raise asyncio.CancelledError
+    except asyncio.CancelledError as exc:
+        await _clear_active_viva_task(request, viva_request_id, current_task)
+        logger.info("Viva request cancelled. request_id=%s", viva_request_id)
+        raise HTTPException(status_code=499, detail="Viva request cancelled.") from exc
     except Exception as exc:
+        await _clear_active_viva_task(request, viva_request_id, current_task)
         logger.exception("Viva request failed: %s", exc)
         raise HTTPException(status_code=500, detail="Viva backend request failed.") from exc
 
@@ -118,6 +149,8 @@ async def viva(
             request.app.state.tts_service.synthesize_to_file,
             response_text,
         )
+        if current_task is not None and current_task.cancelling():
+            raise asyncio.CancelledError
         audio_payload.update(
             {
                 "audio_url": (
@@ -130,9 +163,14 @@ async def viva(
                 "tts_processing_time": tts_result.processing_time,
             }
         )
+    except asyncio.CancelledError as exc:
+        logger.info("Viva request cancelled during TTS. request_id=%s", viva_request_id)
+        raise HTTPException(status_code=499, detail="Viva request cancelled.") from exc
     except Exception as exc:
         logger.exception("TTS generation failed: %s", exc)
         audio_payload["tts_error"] = "TTS generation failed."
+    finally:
+        await _clear_active_viva_task(request, viva_request_id, current_task)
 
     total_duration = time.time() - start_time
     logger.info("Viva request completed in %.2f seconds.", total_duration)
@@ -141,6 +179,25 @@ async def viva(
         "processing_time": round(process_duration, 2),
         "used_screenshot": bool(screenshot_bytes),
         **audio_payload,
+    }
+
+@app.post("/viva/cancel/{request_id}")
+async def cancel_viva(request: Request, request_id: str):
+    async with request.app.state.active_viva_task_lock:
+        task = request.app.state.active_viva_tasks.get(request_id)
+
+    if task is None or task.done():
+        return {
+            "request_id": request_id,
+            "cancelled": False,
+            "detail": "No active Viva request found for this id.",
+        }
+
+    task.cancel()
+    logger.info("Viva cancellation requested. request_id=%s", request_id)
+    return {
+        "request_id": request_id,
+        "cancelled": True,
     }
 
 @app.post("/transcribe")
