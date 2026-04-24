@@ -4,13 +4,16 @@ import os
 import tempfile
 import time
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import mlx_whisper
 import numpy as np
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.staticfiles import StaticFiles
 
-from langchain_agent import PuroLangService
+from langchain_agent import VivaAgentService
+from tts_tools import DEFAULT_OUTPUT_DIR, VivaTTSService
 
 # --- 1. Setup Logging ---
 logging.basicConfig(
@@ -21,6 +24,8 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 MODEL_REPO = "mlx-community/whisper-large-v3-mlx"
+TTS_OUTPUT_DIR = Path(os.getenv("VIVA_TTS_OUTPUT_DIR", str(DEFAULT_OUTPUT_DIR)))
+TTS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
 def _warm_up_whisper_model() -> None:
     dummy_audio = np.zeros(16000, dtype=np.float32)
@@ -42,8 +47,13 @@ async def lifespan(app: FastAPI):
 
     # Warm up Whisper off the event loop and initialize the LangChain agent once.
     await asyncio.to_thread(_warm_up_whisper_model)
-    app.state.viva_service = PuroLangService()
+    app.state.viva_service = VivaAgentService()
     await app.state.viva_service.initialize()
+    app.state.tts_service = VivaTTSService(output_dir=TTS_OUTPUT_DIR)
+
+    if os.getenv("VIVA_TTS_WARMUP", "0") == "1":
+        logger.info("Pre-loading TTS model into memory...")
+        await asyncio.to_thread(app.state.tts_service.warm_up)
 
     logger.info(f"Model successfully loaded and cached in {time.time() - start_time:.2f} seconds.")
     logger.info("Server is ready to accept requests!")
@@ -53,6 +63,11 @@ async def lifespan(app: FastAPI):
 
 # Initialize FastAPI with the lifespan context
 app = FastAPI(lifespan=lifespan)
+app.mount(
+    "/generated-audio",
+    StaticFiles(directory=str(TTS_OUTPUT_DIR)),
+    name="generated-audio",
+)
 
 @app.post("/viva")
 async def viva(
@@ -87,11 +102,45 @@ async def viva(
         raise HTTPException(status_code=500, detail="Viva backend request failed.") from exc
 
     process_duration = time.time() - start_time
-    logger.info("Viva response generated in %.2f seconds.", process_duration)
+    logger.info("Viva response text generated in %.2f seconds.", process_duration)
+
+    audio_payload: dict[str, object] = {
+        "audio_url": None,
+        "audio_content_type": None,
+        "tts_language": None,
+        "tts_voice": None,
+        "tts_processing_time": None,
+        "tts_error": None,
+    }
+
+    try:
+        tts_result = await asyncio.to_thread(
+            request.app.state.tts_service.synthesize_to_file,
+            response_text,
+        )
+        audio_payload.update(
+            {
+                "audio_url": (
+                    str(request.base_url).rstrip("/")
+                    + f"/generated-audio/{tts_result.path.name}"
+                ),
+                "audio_content_type": "audio/wav",
+                "tts_language": tts_result.language,
+                "tts_voice": tts_result.voice,
+                "tts_processing_time": tts_result.processing_time,
+            }
+        )
+    except Exception as exc:
+        logger.exception("TTS generation failed: %s", exc)
+        audio_payload["tts_error"] = "TTS generation failed."
+
+    total_duration = time.time() - start_time
+    logger.info("Viva request completed in %.2f seconds.", total_duration)
     return {
         "text": response_text,
         "processing_time": round(process_duration, 2),
         "used_screenshot": bool(screenshot_bytes),
+        **audio_payload,
     }
 
 @app.post("/transcribe")

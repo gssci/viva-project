@@ -20,9 +20,10 @@ OLLAMA_BASE_URL = os.getenv("VIVA_OLLAMA_BASE_URL", "http://localhost:11434/v1/"
 OLLAMA_API_KEY = os.getenv("VIVA_OLLAMA_API_KEY", "ollama")
 
 SYSTEM_PROMPT = (
-    "Sei Viva, un assistente utile, conciso e orientato all'azione. "
-    "Usa i tool quando servono davvero. "
-    "Fornisci risposte brevi all'utente di massimo una frase."
+    "You are Viva, a useful, quick, action-oriented assistant. "
+    "Use tools when they are actually needed. "
+    "Reply with short, one-sentence responses. "
+    "Reply in the same language used by the user. "
 )
 
 
@@ -58,8 +59,8 @@ def _extract_response_text(response: dict[str, Any]) -> str:
 def _get_gps_location_blocking() -> str:
     g = geocoder.ip()
     if g.ok:
-        return f"Latitudine: {g.lat}, Longitudine: {g.lng}, Citta: {g.city}"
-    return "Impossibile determinare la posizione GPS."
+        return f"Latitude: {g.lat}, Longitude: {g.lng}, City: {g.city}"
+    return "Unable to determine GPS location."
 
 
 def _web_search_blocking(query: str, max_results: int) -> str:
@@ -71,8 +72,8 @@ def _extract_webpage_text_blocking(url: str) -> str:
     downloaded = trafilatura.fetch_url(url)
     if downloaded:
         text = trafilatura.extract(downloaded)
-        return text[:6000] if text else "Nessun testo estratto."
-    return "Impossibile scaricare la pagina."
+        return text[:6000] if text else "No text extracted."
+    return "Unable to download the page."
 
 
 def _get_weather_blocking(lat: float, lon: float) -> str:
@@ -82,40 +83,40 @@ def _get_weather_blocking(lat: float, lon: float) -> str:
     )
     response = requests.get(url, timeout=15)
     response.raise_for_status()
-    return str(response.json().get("current_weather", "Dati meteo non disponibili."))
+    return str(response.json().get("current_weather", "Weather data is not available."))
 
 
 @tool
 async def get_current_datetime() -> str:
-    """Restituisce la data e l'ora attuali di sistema."""
+    """Returns the current system date and time."""
     return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
 
 @tool
 async def web_search(query: str, max_results: int = 5) -> str:
-    """Effettua una ricerca sul web e restituisce i risultati principali."""
+    """Runs a web search and returns the top results."""
     try:
         return await asyncio.to_thread(_web_search_blocking, query, max_results)
     except Exception as exc:
-        return f"Errore durante la ricerca web: {exc}"
+        return f"Web search failed: {exc}"
 
 
 @tool
 async def extract_webpage_text(url: str) -> str:
-    """Estrae il testo pulito da una pagina web in modalita lettura, ignorando ads e menu."""
+    """Extracts clean reader-mode text from a web page, ignoring ads and menus."""
     try:
         return await asyncio.to_thread(_extract_webpage_text_blocking, url)
     except Exception as exc:
-        return f"Errore nell'estrazione: {exc}"
+        return f"Text extraction failed: {exc}"
 
 
 @tool
 async def get_weather(lat: float, lon: float) -> str:
-    """Ottiene il meteo attuale per le coordinate specificate."""
+    """Gets the current weather for the specified coordinates."""
     try:
         return await asyncio.to_thread(_get_weather_blocking, lat, lon)
     except Exception as exc:
-        return f"Errore nel recupero del meteo: {exc}"
+        return f"Weather retrieval failed: {exc}"
 
 
 TOOLS = [
@@ -127,7 +128,7 @@ TOOLS = [
 
 TOOLS.extend(all_mac_tools)
 
-class PuroLangService:
+class VivaAgentService:
     def __init__(self) -> None:
         self._agent = None
         self._initialization_lock = asyncio.Lock()
@@ -151,7 +152,7 @@ class PuroLangService:
                 tools=TOOLS,
                 system_prompt=SYSTEM_PROMPT,
             )
-            logger.info("PuroLang agent initialized with model '%s'.", OLLAMA_MODEL)
+            logger.info("Viva agent initialized with model '%s'.", OLLAMA_MODEL)
 
     async def run(
         self,
@@ -165,11 +166,11 @@ class PuroLangService:
         prompt = text.strip()
         if screenshot_bytes:
             prompt += (
-                "\n\n[Nota di sistema: il frontend ha allegato uno screenshot "
-                f"('{screenshot_filename or 'upload'}', tipo "
+                "\n\n[System note: the frontend attached a screenshot "
+                f"('{screenshot_filename or 'upload'}', content type "
                 f"{screenshot_content_type or 'application/octet-stream'}). "
-                "Il backend inoltra al modello solo il testo, quindi rispondi basandoti "
-                "sulla richiesta testuale dell'utente.]"
+                "The backend currently forwards only text to the model, so answer based "
+                "on the user's text request.]"
             )
 
         async with self._invocation_lock:
@@ -179,7 +180,7 @@ class PuroLangService:
 
         response_text = _extract_response_text(response)
         if not response_text:
-            raise RuntimeError("L'agente non ha restituito testo.")
+            raise RuntimeError("The agent did not return text.")
         return response_text
 
 
@@ -188,9 +189,9 @@ async def run_viva_agent(
     screenshot_bytes: bytes | None = None,
     screenshot_content_type: str | None = None,
     screenshot_filename: str | None = None,
-    service: PuroLangService | None = None,
+    service: VivaAgentService | None = None,
 ) -> str:
-    viva_service = service or PuroLangService()
+    viva_service = service or VivaAgentService()
     return await viva_service.run(
         text=text,
         screenshot_bytes=screenshot_bytes,
@@ -200,8 +201,8 @@ async def run_viva_agent(
 
 
 async def _demo() -> None:
-    service = PuroLangService()
-    response = await service.run("Che giorno e oggi?")
+    service = VivaAgentService()
+    response = await service.run("What day is it today?")
     print(response)
 
 

@@ -84,7 +84,7 @@ def send_imessage(contact: str, message: str) -> str:
     end tell
     '''
     result = run_applescript(script)
-    if "Error" in result or "Errore" in result:
+    if "Error" in result:
         return f"Failed to send the message. Ensure the contact {contact} is correct or exists."
     return f"Message successfully sent to {contact}."
 
@@ -220,7 +220,7 @@ def get_clipboard_content() -> str:
     """
     script = 'the clipboard as text'
     result = run_applescript(script)
-    if "Error" in result or "Errore" in result:
+    if "Error" in result:
         return "No text found in the clipboard."
     return result
 

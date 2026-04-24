@@ -7,11 +7,23 @@ private struct VivaResponse: Decodable {
     let text: String
     let processingTime: Double?
     let usedScreenshot: Bool?
+    let audioURL: URL?
+    let audioContentType: String?
+    let ttsLanguage: String?
+    let ttsVoice: String?
+    let ttsProcessingTime: Double?
+    let ttsError: String?
 
     private enum CodingKeys: String, CodingKey {
         case text
         case processingTime = "processing_time"
         case usedScreenshot = "used_screenshot"
+        case audioURL = "audio_url"
+        case audioContentType = "audio_content_type"
+        case ttsLanguage = "tts_language"
+        case ttsVoice = "tts_voice"
+        case ttsProcessingTime = "tts_processing_time"
+        case ttsError = "tts_error"
     }
 }
 
@@ -66,9 +78,48 @@ class AudioRecorder: NSObject, ObservableObject {
     }
 }
 
+// MARK: - Response Audio Playback
+@MainActor
+class ResponseAudioPlayer: NSObject, ObservableObject, AVAudioPlayerDelegate {
+    private var audioPlayer: AVAudioPlayer?
+
+    func play(from url: URL) async {
+        do {
+            let (data, response) = try await URLSession.shared.data(from: url)
+
+            guard let httpResponse = response as? HTTPURLResponse,
+                  200..<300 ~= httpResponse.statusCode else {
+                throw URLError(.badServerResponse)
+            }
+
+            let player = try AVAudioPlayer(data: data)
+            audioPlayer = player
+            player.delegate = self
+            player.prepareToPlay()
+            player.play()
+        } catch {
+            print("TTS Playback Error: \(error.localizedDescription)")
+        }
+    }
+
+    func stop() {
+        audioPlayer?.stop()
+        audioPlayer = nil
+    }
+
+    nonisolated func audioPlayerDidFinishPlaying(_ player: AVAudioPlayer, successfully flag: Bool) {
+        Task { @MainActor in
+            if self.audioPlayer === player {
+                self.audioPlayer = nil
+            }
+        }
+    }
+}
+
 // MARK: - Main View
 struct ContentView: View {
     @StateObject private var recorder = AudioRecorder()
+    @StateObject private var responseAudioPlayer = ResponseAudioPlayer()
     
     // UI State
     @State private var textInput: String = ""
@@ -259,6 +310,7 @@ struct ContentView: View {
             await MainActor.run {
                 isSendingToAI = true
                 agentResponse = ""
+                responseAudioPlayer.stop()
             }
 
             defer {
@@ -277,6 +329,14 @@ struct ContentView: View {
                 await MainActor.run {
                     textInput = ""
                     agentResponse = response.text
+                }
+
+                if let ttsError = response.ttsError {
+                    print("TTS Error: \(ttsError)")
+                }
+
+                if let audioURL = response.audioURL {
+                    await responseAudioPlayer.play(from: audioURL)
                 }
             } catch {
                 await MainActor.run {
