@@ -10,7 +10,7 @@ import numpy as np
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 
-from purolang import PuroLangService
+from langchain_agent import PuroLangService
 
 # --- 1. Setup Logging ---
 logging.basicConfig(
@@ -20,10 +20,7 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Define the model repo (mlx-community/whisper-large-v3-mlx is the newest standard, 
-# but keeping your requested name)
 MODEL_REPO = "mlx-community/whisper-large-v3-mlx"
-
 
 def _warm_up_whisper_model() -> None:
     dummy_audio = np.zeros(16000, dtype=np.float32)
@@ -138,4 +135,4 @@ async def transcribe(file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     # Standard Uvicorn startup
-    uvicorn.run("speech_backend:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("viva_api_server:app", host="127.0.0.1", port=8000, reload=True)

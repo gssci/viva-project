@@ -50,9 +50,9 @@ def read_this(text):
     if lang == "en":
         generate_audio(
             text=text,
-            model_path="prince-canuma/Kokoro-82M",
+            model="prince-canuma/Kokoro-82M",
             voice="af_heart",
-            speed=1.1,
+            speed=1.0,
             lang_code="a",
             play=True,
             stream=True,
@@ -60,10 +60,14 @@ def read_this(text):
     elif lang == "it":
         generate_audio(
             text=text,
-            model_path="prince-canuma/Kokoro-82M",
+            model="prince-canuma/Kokoro-82M",
             voice="im_nicola",
             speed=1.25,
             lang_code="i",
             play=True,
             stream=True,
         )
+
+if __name__ == "__main__":
+    testo = "bitch, I said what I said. I'd rather be famous instead. I let all that get to my head. I don't care I paint the town red."
+    read_this(testo)
