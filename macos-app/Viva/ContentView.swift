@@ -430,6 +430,7 @@ struct ContentView: View {
         let url = URL(string: "http://127.0.0.1:8000/viva")!
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
+        request.timeoutInterval = 120
         
         let boundary = UUID().uuidString
         request.setValue("multipart/form-data; boundary=\(boundary)", forHTTPHeaderField: "Content-Type")

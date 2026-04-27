@@ -14,7 +14,7 @@ from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
 from fastapi.staticfiles import StaticFiles
 
 from langchain_agent import VivaAgentService
-from tools.tts_tools import DEFAULT_OUTPUT_DIR, VivaTTSService
+from tools.qwen_tts_tools import DEFAULT_OUTPUT_DIR, VivaQwenTTSService
 
 # --- 1. Setup Logging ---
 logging.basicConfig(
@@ -50,7 +50,7 @@ async def lifespan(app: FastAPI):
     await asyncio.to_thread(_warm_up_whisper_model)
     app.state.viva_service = VivaAgentService()
     await app.state.viva_service.initialize()
-    app.state.tts_service = VivaTTSService(output_dir=TTS_OUTPUT_DIR)
+    app.state.tts_service = VivaQwenTTSService(output_dir=TTS_OUTPUT_DIR)
     app.state.active_viva_tasks = {}
     app.state.active_viva_task_lock = asyncio.Lock()
 
