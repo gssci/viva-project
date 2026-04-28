@@ -2,7 +2,7 @@
 
 **Viva** is a macOS menubar AI assistant that leverages open-source AI models to provide a completely private, local Siri alternative. Everything runs on your MacBook Pro — no cloud services, no data leaves your machine.
 
-Speak naturally, and Viva listens, understands, and acts. It can answer questions, search the web, control your Mac, send messages, manage reminders, and much more — all powered by locally-running open-source models on Apple Silicon.
+Speak naturally, and Viva listens, understands, and acts. It can answer questions, search the web, control your Mac, send messages, manage reminders and calendar events, and much more — all powered by locally-running open-source models on Apple Silicon.
 
 ---
 
@@ -21,11 +21,11 @@ Viva is designed with privacy as a first-class principle:
 
 - **🎙️ Voice-First Interaction** — Tap the mic, speak naturally, and get spoken responses. Speech-to-text and text-to-speech run entirely on-device.
 - **🔒 100% Private** — All inference happens locally via Ollama and MLX. No data is sent to any external AI provider.
-- **🧠 Local LLM Agent** — Powered by a LangChain agent connected to your local Ollama instance. Default model is `gemma4:26b`, but any Ollama-compatible model works.
-- **🖥️ macOS Integration** — Control your Mac through AppleScript: adjust volume, toggle dark mode, send iMessages, create Notes and Reminders, read clipboard, control Music, empty Trash, and more.
+- **🧠 Local LLM Agent** — Powered by a LangChain agent connected to your local Ollama instance, with in-process message history for follow-up requests. Default model is `gemma4:26b`, but any Ollama-compatible model works.
+- **🖥️ macOS Integration** — Control your Mac through modular AppleScript tools: adjust volume, toggle dark mode, send iMessages, create Notes, manage Reminders and Calendar events, read clipboard, inspect Safari/Finder context, control Music, empty Trash, and more.
 - **🌐 Web Awareness** — Search the web, extract clean text from webpages, and get real-time weather data.
 - **📸 Screen Context** — Optionally share a screenshot with your request for visual context.
-- **🗣️ Multilingual TTS** — Text-to-speech in 10 languages (English, Chinese, Japanese, Korean, German, French, Russian, Portuguese, Spanish, Italian) using Qwen TTS on MLX.
+- **🗣️ Multilingual TTS** — Text-to-speech in 10 languages (English, Chinese, Japanese, Korean, German, French, Russian, Portuguese, Spanish, Italian) using Qwen3 TTS on MLX.
 - **🎤 Whisper Transcription** — MLX-powered Whisper Large V3 for fast, accurate on-device speech recognition with automatic language detection.
 
 ---
@@ -68,9 +68,9 @@ Viva is designed with privacy as a first-class principle:
 | **macOS App** | SwiftUI + SwiftData | Menubar icon, floating input panel, audio recording, response playback |
 | **Backend Server** | FastAPI + Uvicorn | REST API coordinating STT, agent, and TTS |
 | **Speech-to-Text** | MLX Whisper (Large V3) | On-device audio transcription via Apple Silicon Neural Engine |
-| **AI Agent** | LangChain + Ollama | Conversational agent with tool-calling capabilities |
+| **AI Agent** | LangChain + Ollama | Conversational agent with tool-calling capabilities and in-process message history |
 | **Text-to-Speech** | Qwen TTS (MLX Audio) | On-device voice synthesis in 10 languages |
-| **macOS Tools** | AppleScript (`osascript`) | Volume, dark mode, iMessage, Notes, Reminders, clipboard, Safari, Finder, Music, Trash |
+| **macOS Tools** | AppleScript (`osascript`) | Volume, dark mode, iMessage, Notes, Reminders, Calendar, clipboard, Safari, Finder, Music, Trash |
 
 ---
 
@@ -105,7 +105,7 @@ cd backend
 # Create a virtual environment and install dependencies
 python -m venv .venv
 source .venv/bin/activate
-pip install -r pyproject.toml
+pip install -e .
 ```
 
 Or use [`uv`](https://github.com/astral-sh/uv) for faster installs:
@@ -146,7 +146,10 @@ All configuration is done via environment variables. Set them in your shell or a
 | `VIVA_OLLAMA_MODEL` | `gemma4:26b` | Ollama model to use for the agent |
 | `VIVA_OLLAMA_BASE_URL` | `http://localhost:11434/v1/` | Ollama API endpoint |
 | `VIVA_OLLAMA_API_KEY` | `ollama` | API key for Ollama (usually not needed) |
-| `VIVA_TTS_OUTPUT_DIR` | `/tmp/viva-tts` | Directory for generated TTS audio files |
+| `VIVA_QWEN_TTS_MODEL` | `mlx-community/Qwen3-TTS-12Hz-0.6B-CustomVoice-6bit` | MLX Qwen TTS model used for speech synthesis |
+| `VIVA_QWEN_TTS_SPEAKER` | `Vivian` | Default Qwen TTS speaker voice |
+| `VIVA_QWEN_TTS_INSTRUCT` | neutral delivery prompt | Voice style instruction passed to Qwen TTS |
+| `VIVA_TTS_OUTPUT_DIR` | system temp `viva_tts_audio` directory | Directory for generated TTS audio files |
 | `VIVA_TTS_WARMUP` | `0` | Set to `1` to pre-load the TTS model at startup |
 
 Example with a custom model:
@@ -169,6 +172,8 @@ VIVA_OLLAMA_MODEL=llama3.3:70b python viva_api_server.py
 
 - *"What's the weather like in Rome?"*
 - *"Set a reminder to call Mom at 5 PM"*
+- *"Add lunch with Sara to my calendar tomorrow at 1 PM"*
+- *"What's on my calendar this week?"*
 - *"Turn on dark mode"*
 - *"Search for the latest Python release"*
 - *"What's on my clipboard?"*
@@ -196,7 +201,15 @@ viva-project/
 │   │   ├── qwen_tts_tools.py      # Qwen TTS synthesis on MLX
 │   │   └── tts_tools.py           # Legacy TTS utilities
 │   ├── agent_tools/
-│   │   └── applescript_tools.py   # macOS control tools (volume, messages, etc.)
+│   │   └── applescript_tools/     # Modular macOS AppleScript tools
+│   │       ├── __init__.py        # Collects all AppleScript tools for the LangChain agent
+│   │       ├── core.py            # Shared AppleScript/date helpers
+│   │       ├── system.py          # Volume, mute, dark mode
+│   │       ├── productivity.py    # Messages and Notes
+│   │       ├── reminders.py       # Reminders management
+│   │       ├── calendar.py        # Calendar event management
+│   │       ├── context.py         # Clipboard, Safari, Finder context
+│   │       └── media_files.py     # Music and Trash
 │   └── chains/
 │       └── applescript_generator.py  # AppleScript generation chain
 └── README.md
@@ -225,8 +238,8 @@ Build and run directly from Xcode. The app communicates with the backend via HTT
 | Method | Endpoint | Description |
 |---|---|---|
 | `POST` | `/transcribe` | Upload audio file → returns transcribed text |
-| `POST` | `/viva` | Send text (+ optional screenshot) → returns AI response + TTS audio |
-| `POST` | `/viva/cancel/{id}` | Cancel an in-progress Viva request |
+| `POST` | `/viva` | Send text (+ optional screenshot and request ID) → returns AI response + TTS audio |
+| `POST` | `/viva/cancel/{id}` | Cancel an in-progress Viva request by request ID |
 
 
 ---
@@ -235,9 +248,9 @@ Build and run directly from Xcode. The app communicates with the backend via HTT
 
 Contributions are welcome! Here are some areas where help is needed:
 
-- More AppleScript tools for deeper macOS integration
+- More AppleScript tool domains for deeper macOS integration
 - Vision support for screenshot understanding
-- Persistent conversation history
+- Persistent cross-session conversation history
 - Settings panel for model and voice preferences
 - Support for additional TTS voices and languages
 
