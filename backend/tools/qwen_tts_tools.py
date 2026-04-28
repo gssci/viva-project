@@ -61,10 +61,10 @@ LANGDETECT_TO_QWEN_LANGUAGE: dict[str, QwenLanguage] = {
     "it": "Italian",
 }
 
-DEFAULT_TTS_MODEL = "mlx-community/Qwen3-TTS-12Hz-1.7B-CustomVoice-6bit"
+DEFAULT_TTS_MODEL = "mlx-community/Qwen3-TTS-12Hz-0.6B-CustomVoice-6bit"
 DEFAULT_OUTPUT_DIR = Path(tempfile.gettempdir()) / "viva_tts_audio"
-DEFAULT_SPEAKER = os.getenv("VIVA_QWEN_TTS_SPEAKER", "Serena")
-DEFAULT_INSTRUCT = os.getenv("VIVA_QWEN_TTS_INSTRUCT", "A friendly and professional AI assistant with a clear, warm, and gentle voice. The tone is perfectly neutral but deeply empathetic, speaking with pristine articulation and a highly natural, expressive cadence.").strip() or None
+DEFAULT_SPEAKER = os.getenv("VIVA_QWEN_TTS_SPEAKER", "Vivian")
+DEFAULT_INSTRUCT = os.getenv("VIVA_QWEN_TTS_INSTRUCT", "Crisp, objective, and neutral delivery. Straightforward with no strong emotion.").strip() or None
 DEFAULT_FALLBACK_LANGUAGE: QwenLanguage = "English"
 
 

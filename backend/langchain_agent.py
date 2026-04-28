@@ -12,6 +12,10 @@ from langchain.agents import create_agent
 from langchain.tools import tool
 from langchain_openai import ChatOpenAI
 from agent_tools.applescript_tools import all_mac_tools
+from langchain_experimental.utilities import PythonREPL
+from langgraph.checkpoint.memory import InMemorySaver  
+
+python_repl = PythonREPL()
 
 logger = logging.getLogger(__name__)
 
@@ -20,10 +24,12 @@ OLLAMA_BASE_URL = os.getenv("VIVA_OLLAMA_BASE_URL", "http://localhost:11434/v1/"
 OLLAMA_API_KEY = os.getenv("VIVA_OLLAMA_API_KEY", "ollama")
 
 SYSTEM_PROMPT = (
-    "You are Viva, a useful, quick, action-oriented assistant. "
+    "You are Viva, a useful, concise and action-oriented assistant. "
     "Use tools when they are actually needed. "
-    "Reply with short, one-sentence responses. "
+    "Reply with short, plain-text responses without any formatting. "
+    "Your replies must sound natural like spoken language. "
     "Reply in the same language used by the user. "
+    "Use the Python tool to perform math computations. "
 )
 
 
@@ -64,11 +70,13 @@ def _get_gps_location_blocking() -> str:
 
 
 def _web_search_blocking(query: str, max_results: int) -> str:
+    logger.info(f"Using DDG to search for {query}, max_results={max_results}")
     results = DDGS().text(query, max_results=max_results)
     return str(list(results))
 
 
 def _extract_webpage_text_blocking(url: str) -> str:
+    logger.info(f"Using Trafilatura to fetch {url}")
     downloaded = trafilatura.fetch_url(url)
     if downloaded:
         text = trafilatura.extract(downloaded)
@@ -118,6 +126,18 @@ async def get_weather(lat: float, lon: float) -> str:
     except Exception as exc:
         return f"Weather retrieval failed: {exc}"
 
+# You can create the tool to pass to an agent
+@tool
+def python_repl_tool(code: str) -> str:
+    """A Python shell.
+
+    Use this to execute python commands.
+
+    Input should be a valid python command.
+
+    If you want to see the output of a value, you should print it out with `print(...)`.
+    """
+    return python_repl.run(code)
 
 TOOLS = [
     get_current_datetime,
@@ -151,6 +171,7 @@ class VivaAgentService:
                 model=llm,
                 tools=TOOLS,
                 system_prompt=SYSTEM_PROMPT,
+                checkpointer=InMemorySaver()
             )
             logger.info("Viva agent initialized with model '%s'.", OLLAMA_MODEL)
 
@@ -175,7 +196,8 @@ class VivaAgentService:
 
         async with self._invocation_lock:
             response = await self._agent.ainvoke(
-                {"messages": [{"role": "user", "content": prompt}]}
+                {"messages": [{"role": "user", "content": prompt}]},
+                config={"thread_id":0}
             )
 
         response_text = _extract_response_text(response)
