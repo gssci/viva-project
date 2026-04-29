@@ -6,6 +6,66 @@ Speak naturally, and Viva listens, understands, and acts. It can answer question
 
 ---
 
+## What Can It Do?
+
+| Use Viva to... | Example request |
+|---|---|
+| Answer questions and keep conversational context | "What is a concise summary of this topic?" |
+| Search the web | "Search for the latest Python release." |
+| Extract readable text from a web page | "Read this article and summarize it." |
+| Get current weather from coordinates | "What's the weather at my current location?" |
+| Check the current date and time | "What day is it today?" |
+| Change system volume | "Set the Mac volume to 35 percent." |
+| Mute or unmute audio | "Mute my Mac." |
+| Toggle dark or light mode | "Turn on dark mode." |
+| Check battery and charging status | "How much battery do I have left?" |
+| Check Wi-Fi/network status | "What Wi-Fi network am I on?" |
+| Identify the frontmost app | "What app am I using right now?" |
+| Get a Mac system summary | "Tell me about this Mac." |
+| Lock the screen | "Lock my Mac." |
+| Start the screensaver | "Start the screensaver." |
+| Open System Settings panes | "Open Bluetooth settings." |
+| Show a macOS notification | "Notify me that the export is done." |
+| Speak text with the system voice | "Say this out loud: meeting starts in five minutes." |
+| Send an iMessage/SMS through Messages | "Text John saying I'll be there in 10 minutes." |
+| Create an Apple Note | "Create a note with these meeting takeaways." |
+| List reminder lists | "What reminder lists do I have?" |
+| Create reminders with notes, due dates, lists, and priority | "Remind me to submit the report tomorrow at 9 AM with high priority." |
+| List pending reminders | "What reminders do I still need to do?" |
+| Complete reminders | "Mark the grocery reminder as done." |
+| Delete reminders | "Delete the reminder about renewing the trial." |
+| Update reminders | "Move the dentist reminder to Friday at 3 PM." |
+| Show a reminder in Reminders | "Open my passport renewal reminder." |
+| List calendars | "What calendars do I have?" |
+| Create Calendar events with location, notes, URL, attendees, and alarms | "Add this event to my calendar with a 15-minute alert." |
+| List Calendar events | "What's on my calendar this week?" |
+| Update Calendar events | "Move my team sync to 4 PM." |
+| Delete Calendar events | "Cancel the lunch event tomorrow." |
+| Show a Calendar event | "Open my next dentist appointment." |
+| Check Calendar conflicts | "Am I free tomorrow from 2 to 3?" |
+| Find free Calendar slots | "Find a free 30-minute slot tomorrow afternoon." |
+| Search Contacts | "Find Maria's contact details." |
+| Get a contact's emails and phone numbers | "What email addresses do I have for Luca?" |
+| List unread, recent, or searched Mail summaries | "Show me unread emails from Maria." |
+| Create Mail drafts | "Draft an email to Sara about the project update." |
+| Send Mail messages | "Send an email to Alex with the subject Budget and this summary." |
+| List selected Finder items | "What files did I select in Finder?" |
+| List folder contents | "What's inside my Downloads folder?" |
+| Reveal files or folders in Finder | "Show this file in Finder." |
+| Open files or folders | "Open the selected folder." |
+| Create Finder folders | "Create a folder called Invoices in Documents." |
+| Duplicate selected Finder items | "Duplicate the files I selected." |
+| Copy selected Finder items to a folder | "Copy the selected files to my Desktop." |
+| Compress selected Finder items | "Zip the files I selected in Finder." |
+| Read clipboard text | "What's on my clipboard?" |
+| Set clipboard text | "Copy this answer to my clipboard." |
+| Read the active Safari tab URL/title | "What page am I looking at in Safari?" |
+| Get the selected Finder item path | "Use the file I selected in Finder." |
+| Control Apple Music playback | "Skip this song." |
+| Empty the Trash | "Empty the trash." |
+
+---
+
 ## 🔒 Privacy
 
 Viva is designed with privacy as a first-class principle:
@@ -22,7 +82,7 @@ Viva is designed with privacy as a first-class principle:
 - **🎙️ Voice-First Interaction** — Tap the mic, speak naturally, and get spoken responses. Speech-to-text and text-to-speech run entirely on-device.
 - **🔒 100% Private** — All inference happens locally via Ollama and MLX. No data is sent to any external AI provider.
 - **🧠 Local LLM Agent** — Powered by a LangChain agent connected to your local Ollama instance, with in-process message history for follow-up requests. Default model is `gemma4:26b`, but any Ollama-compatible model works.
-- **🖥️ macOS Integration** — Control your Mac through modular AppleScript tools: adjust volume, toggle dark mode, send iMessages, create Notes, manage Reminders and Calendar events, read clipboard, inspect Safari/Finder context, control Music, empty Trash, and more.
+- **🖥️ macOS Integration** — Control your Mac through modular AppleScript tools: inspect system state, open settings panes, show notifications, speak feedback, send iMessages/email, create Notes, manage Reminders and Calendar events, look up Contacts, organize Finder selections, control Music, empty Trash, and more.
 - **🌐 Web Awareness** — Search the web, extract clean text from webpages, and get real-time weather data.
 - **📸 Screen Context** — Optionally share a screenshot with your request for visual context.
 - **🗣️ Multilingual TTS** — Text-to-speech in 10 languages (English, Chinese, Japanese, Korean, German, French, Russian, Portuguese, Spanish, Italian) using Qwen3 TTS on MLX.
@@ -70,7 +130,7 @@ Viva is designed with privacy as a first-class principle:
 | **Speech-to-Text** | MLX Whisper (Large V3) | On-device audio transcription via Apple Silicon Neural Engine |
 | **AI Agent** | LangChain + Ollama | Conversational agent with tool-calling capabilities and in-process message history |
 | **Text-to-Speech** | Qwen TTS (MLX Audio) | On-device voice synthesis in 10 languages |
-| **macOS Tools** | AppleScript (`osascript`) | Volume, dark mode, iMessage, Notes, Reminders, Calendar, clipboard, Safari, Finder, Music, Trash |
+| **macOS Tools** | AppleScript (`osascript`) | System state, settings, notifications, speech, iMessage, Mail, Contacts, Notes, Reminders, Calendar, clipboard, Safari, Finder, Music, Trash |
 
 ---
 
@@ -174,6 +234,10 @@ VIVA_OLLAMA_MODEL=llama3.3:70b python viva_api_server.py
 - *"Set a reminder to call Mom at 5 PM"*
 - *"Add lunch with Sara to my calendar tomorrow at 1 PM"*
 - *"What's on my calendar this week?"*
+- *"Find a free slot for a 30-minute meeting tomorrow afternoon"*
+- *"Show me unread emails from Maria"*
+- *"Zip the files I selected in Finder"*
+- *"Notify me when this is done"*
 - *"Turn on dark mode"*
 - *"Search for the latest Python release"*
 - *"What's on my clipboard?"*
@@ -205,9 +269,13 @@ viva-project/
 │   │       ├── __init__.py        # Collects all AppleScript tools for the LangChain agent
 │   │       ├── core.py            # Shared AppleScript/date helpers
 │   │       ├── system.py          # Volume, mute, dark mode
+│   │       ├── system_state.py    # Battery, Wi-Fi, settings, lock screen
+│   │       ├── feedback.py        # macOS notifications and spoken feedback
 │   │       ├── productivity.py    # Messages and Notes
 │   │       ├── reminders.py       # Reminders management
 │   │       ├── calendar.py        # Calendar event management
+│   │       ├── mail_contacts.py   # Mail and Contacts automation
+│   │       ├── finder.py          # Safe Finder organization utilities
 │   │       ├── context.py         # Clipboard, Safari, Finder context
 │   │       └── media_files.py     # Music and Trash
 │   └── chains/

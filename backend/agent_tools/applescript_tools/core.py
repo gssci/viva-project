@@ -48,6 +48,24 @@ def escape_applescript_string(value: Optional[str]) -> str:
     )
 
 
+def parse_csv_values(value: Optional[str], max_items: int = 20) -> list[str]:
+    if not value:
+        return []
+    return [
+        item.strip()
+        for item in value.split(",")
+        if item.strip()
+    ][:max_items]
+
+
+def applescript_list(values: list[str]) -> str:
+    escaped_values = [
+        f'"{escape_applescript_string(value)}"'
+        for value in values
+    ]
+    return "{" + ", ".join(escaped_values) + "}"
+
+
 def parse_calendar_datetime(value: str) -> dt.datetime:
     """
     Parses local calendar date/time input.
