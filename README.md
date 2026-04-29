@@ -262,12 +262,13 @@ viva-project/
 │           └── Item.swift         # SwiftData model
 ├── backend/
 │   ├── viva_api_server.py         # FastAPI server (STT, agent, TTS endpoints)
-│   ├── langchain_agent.py         # LangChain agent with tool definitions
+│   ├── langchain_agent.py         # LangChain agent service and multimodal message handling
 │   ├── pyproject.toml             # Python dependencies
 │   ├── tools/
 │   │   ├── qwen_tts_tools.py      # Qwen TTS synthesis on MLX
 │   │   └── tts_tools.py           # Legacy TTS utilities
 │   ├── agent_tools/
+│   │   ├── general_tools.py       # Date/time, web, weather, and Python tools
 │   │   └── applescript_tools/     # Modular macOS AppleScript tools
 │   │       ├── __init__.py        # Collects all AppleScript tools for the LangChain agent
 │   │       ├── core.py            # Shared AppleScript/date helpers

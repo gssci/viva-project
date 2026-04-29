@@ -1,27 +1,21 @@
 import asyncio
-import datetime
+import base64
 import logging
 import os
 from typing import Any
 
-import geocoder
-import requests
-import trafilatura
-from ddgs import DDGS
 from langchain.agents import create_agent
-from langchain.tools import tool
+from langchain.messages import HumanMessage
 from langchain_openai import ChatOpenAI
-from agent_tools.applescript_tools import all_mac_tools
-from langchain_experimental.utilities import PythonREPL
-from langgraph.checkpoint.memory import InMemorySaver  
-
-python_repl = PythonREPL()
+from agent_tools import all_agent_tools
+from langgraph.checkpoint.memory import InMemorySaver
 
 logger = logging.getLogger(__name__)
 
 OLLAMA_MODEL = os.getenv("VIVA_OLLAMA_MODEL", "gemma4:26b")
 OLLAMA_BASE_URL = os.getenv("VIVA_OLLAMA_BASE_URL", "http://localhost:11434/v1/")
 OLLAMA_API_KEY = os.getenv("VIVA_OLLAMA_API_KEY", "ollama")
+DEFAULT_IMAGE_MIME_TYPE = "image/jpeg"
 
 SYSTEM_PROMPT = (
     "You are Viva, a useful, concise and action-oriented assistant. "
@@ -31,6 +25,48 @@ SYSTEM_PROMPT = (
     "Reply in the same language used by the user. "
     "Use the Python tool to perform math computations. "
 )
+
+
+def _normalize_image_mime_type(content_type: str | None) -> str:
+    if not content_type:
+        return DEFAULT_IMAGE_MIME_TYPE
+
+    mime_type = content_type.split(";", 1)[0].strip().lower()
+    if mime_type.startswith("image/"):
+        return mime_type
+
+    logger.warning(
+        "Received screenshot with non-image content type '%s'; using '%s'.",
+        content_type,
+        DEFAULT_IMAGE_MIME_TYPE,
+    )
+    return DEFAULT_IMAGE_MIME_TYPE
+
+
+def _build_user_message(
+    text: str,
+    screenshot_bytes: bytes | None = None,
+    screenshot_content_type: str | None = None,
+    screenshot_filename: str | None = None,
+) -> HumanMessage:
+    prompt = text.strip()
+    if not screenshot_bytes:
+        return HumanMessage(content=prompt)
+
+    image_block: dict[str, Any] = {
+        "type": "image",
+        "base64": base64.b64encode(screenshot_bytes).decode("ascii"),
+        "mime_type": _normalize_image_mime_type(screenshot_content_type),
+    }
+    if screenshot_filename:
+        image_block["extras"] = {"filename": screenshot_filename}
+
+    return HumanMessage(
+        content_blocks=[
+            {"type": "text", "text": prompt},
+            image_block,
+        ]
+    )
 
 
 def _format_message_content(content: Any) -> str:
@@ -62,92 +98,6 @@ def _extract_response_text(response: dict[str, Any]) -> str:
     return ""
 
 
-def _get_gps_location_blocking() -> str:
-    g = geocoder.ip()
-    if g.ok:
-        return f"Latitude: {g.lat}, Longitude: {g.lng}, City: {g.city}"
-    return "Unable to determine GPS location."
-
-
-def _web_search_blocking(query: str, max_results: int) -> str:
-    logger.info(f"Using DDG to search for {query}, max_results={max_results}")
-    results = DDGS().text(query, max_results=max_results)
-    return str(list(results))
-
-
-def _extract_webpage_text_blocking(url: str) -> str:
-    logger.info(f"Using Trafilatura to fetch {url}")
-    downloaded = trafilatura.fetch_url(url)
-    if downloaded:
-        text = trafilatura.extract(downloaded)
-        return text[:6000] if text else "No text extracted."
-    return "Unable to download the page."
-
-
-def _get_weather_blocking(lat: float, lon: float) -> str:
-    url = (
-        "https://api.open-meteo.com/v1/forecast"
-        f"?latitude={lat}&longitude={lon}&current_weather=true"
-    )
-    response = requests.get(url, timeout=15)
-    response.raise_for_status()
-    return str(response.json().get("current_weather", "Weather data is not available."))
-
-
-@tool
-async def get_current_datetime() -> str:
-    """Returns the current system date and time."""
-    return datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
-
-@tool
-async def web_search(query: str, max_results: int = 5) -> str:
-    """Runs a web search and returns the top results."""
-    try:
-        return await asyncio.to_thread(_web_search_blocking, query, max_results)
-    except Exception as exc:
-        return f"Web search failed: {exc}"
-
-
-@tool
-async def extract_webpage_text(url: str) -> str:
-    """Extracts clean reader-mode text from a web page, ignoring ads and menus."""
-    try:
-        return await asyncio.to_thread(_extract_webpage_text_blocking, url)
-    except Exception as exc:
-        return f"Text extraction failed: {exc}"
-
-
-@tool
-async def get_weather(lat: float, lon: float) -> str:
-    """Gets the current weather for the specified coordinates."""
-    try:
-        return await asyncio.to_thread(_get_weather_blocking, lat, lon)
-    except Exception as exc:
-        return f"Weather retrieval failed: {exc}"
-
-# You can create the tool to pass to an agent
-@tool
-def python_repl_tool(code: str) -> str:
-    """A Python shell.
-
-    Use this to execute python commands.
-
-    Input should be a valid python command.
-
-    If you want to see the output of a value, you should print it out with `print(...)`.
-    """
-    return python_repl.run(code)
-
-TOOLS = [
-    get_current_datetime,
-    web_search,
-    extract_webpage_text,
-    get_weather,
-]
-
-TOOLS.extend(all_mac_tools)
-
 class VivaAgentService:
     def __init__(self) -> None:
         self._agent = None
@@ -169,9 +119,9 @@ class VivaAgentService:
             )
             self._agent = create_agent(
                 model=llm,
-                tools=TOOLS,
+                tools=all_agent_tools,
                 system_prompt=SYSTEM_PROMPT,
-                checkpointer=InMemorySaver()
+                checkpointer=InMemorySaver(),
             )
             logger.info("Viva agent initialized with model '%s'.", OLLAMA_MODEL)
 
@@ -184,20 +134,17 @@ class VivaAgentService:
     ) -> str:
         await self.initialize()
 
-        prompt = text.strip()
-        if screenshot_bytes:
-            prompt += (
-                "\n\n[System note: the frontend attached a screenshot "
-                f"('{screenshot_filename or 'upload'}', content type "
-                f"{screenshot_content_type or 'application/octet-stream'}). "
-                "The backend currently forwards only text to the model, so answer based "
-                "on the user's text request.]"
-            )
+        user_message = _build_user_message(
+            text=text,
+            screenshot_bytes=screenshot_bytes,
+            screenshot_content_type=screenshot_content_type,
+            screenshot_filename=screenshot_filename,
+        )
 
         async with self._invocation_lock:
             response = await self._agent.ainvoke(
-                {"messages": [{"role": "user", "content": prompt}]},
-                config={"thread_id":0}
+                {"messages": [user_message]},
+                config={"thread_id": 0},
             )
 
         response_text = _extract_response_text(response)
