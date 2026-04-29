@@ -62,6 +62,9 @@ Speak naturally, and Viva listens, understands, and acts. It can answer question
 | Read the active Safari tab URL/title | "What page am I looking at in Safari?" |
 | Get the selected Finder item path | "Use the file I selected in Finder." |
 | Control Apple Music playback | "Skip this song." |
+| Play Apple Music recommendations and playlists | "Play music recommended for me." |
+| Search and play Apple Music tracks | "Play Heroes by David Bowie." |
+| Create and update Apple Music playlists | "Create a rock playlist with my highest-rated songs." |
 | Empty the Trash | "Empty the trash." |
 
 ---
@@ -82,7 +85,7 @@ Viva is designed with privacy as a first-class principle:
 - **🎙️ Voice-First Interaction** — Tap the mic, speak naturally, and get spoken responses. Speech-to-text and text-to-speech run entirely on-device.
 - **🔒 100% Private** — All inference happens locally via Ollama and MLX. No data is sent to any external AI provider.
 - **🧠 Local LLM Agent** — Powered by a LangChain agent connected to your local Ollama instance, with in-process message history for follow-up requests. Default model is `gemma4:26b`, but any Ollama-compatible model works.
-- **🖥️ macOS Integration** — Control your Mac through modular AppleScript tools: inspect system state, open settings panes, show notifications, speak feedback, send iMessages/email, create Notes, manage Reminders and Calendar events, look up Contacts, organize Finder selections, control Music, empty Trash, and more.
+- **🖥️ macOS Integration** — Control your Mac through modular AppleScript tools: inspect system state, open settings panes, show notifications, speak feedback, send iMessages/email, create Notes, manage Reminders and Calendar events, look up Contacts, organize Finder selections, control Music playback and playlists, empty Trash, and more.
 - **🌐 Web Awareness** — Search the web, extract clean text from webpages, and get real-time weather data.
 - **📸 Screen Context** — Optionally share a screenshot with your request for visual context.
 - **🗣️ Multilingual TTS** — Text-to-speech in 10 languages (English, Chinese, Japanese, Korean, German, French, Russian, Portuguese, Spanish, Italian) using Qwen3 TTS on MLX.
