@@ -64,7 +64,13 @@ LANGDETECT_TO_QWEN_LANGUAGE: dict[str, QwenLanguage] = {
 DEFAULT_TTS_MODEL = "mlx-community/Qwen3-TTS-12Hz-0.6B-CustomVoice-6bit"
 DEFAULT_OUTPUT_DIR = Path(tempfile.gettempdir()) / "viva_tts_audio"
 DEFAULT_SPEAKER = os.getenv("VIVA_QWEN_TTS_SPEAKER", "Vivian")
-DEFAULT_INSTRUCT = os.getenv("VIVA_QWEN_TTS_INSTRUCT", "Crisp, objective, and neutral delivery. Straightforward with no strong emotion.").strip() or None
+DEFAULT_INSTRUCT = (
+    os.getenv(
+        "VIVA_QWEN_TTS_INSTRUCT",
+        "Crisp, objective, and neutral delivery. Straightforward with no strong emotion.",
+    ).strip()
+    or None
+)
 DEFAULT_FALLBACK_LANGUAGE: QwenLanguage = "English"
 
 
@@ -209,7 +215,9 @@ class VivaQwenTTSService:
         audio_format: str = "wav",
         max_age_seconds: int = 60 * 60,
     ) -> None:
-        self.model_name = model_name or os.getenv("VIVA_QWEN_TTS_MODEL", DEFAULT_TTS_MODEL)
+        self.model_name = model_name or os.getenv(
+            "VIVA_QWEN_TTS_MODEL", DEFAULT_TTS_MODEL
+        )
         self.output_dir = Path(
             output_dir or os.getenv("VIVA_TTS_OUTPUT_DIR", str(DEFAULT_OUTPUT_DIR))
         )
@@ -337,7 +345,9 @@ class VivaQwenTTSService:
         if not supported_speakers:
             return speaker
 
-        speaker_by_lower = {supported.lower(): supported for supported in supported_speakers}
+        speaker_by_lower = {
+            supported.lower(): supported for supported in supported_speakers
+        }
         supported_speaker = speaker_by_lower.get(speaker.lower())
         if supported_speaker:
             return supported_speaker
@@ -360,7 +370,9 @@ class VivaQwenTTSService:
         if not supported_languages:
             return language
 
-        supported_language_names = {supported.lower() for supported in supported_languages}
+        supported_language_names = {
+            supported.lower() for supported in supported_languages
+        }
         if language.lower() in supported_language_names:
             return language
 

@@ -27,7 +27,7 @@ def _clamp(value: int, minimum: int, maximum: int) -> int:
 
 
 def _track_summary_handler() -> str:
-    return '''
+    return """
 on vivaTrackSummary(trackItem)
     set trackName to ""
     set trackArtist to ""
@@ -62,7 +62,7 @@ on vivaTrackSummary(trackItem)
     set output to output & trackLoved
     return output
 end vivaTrackSummary
-'''
+"""
 
 
 def _playlist_lookup_script(
@@ -88,7 +88,7 @@ def get_music_playback_status() -> str:
     Gets the current Apple Music playback status and current track details.
     Call this tool when the user asks what is playing, whether Music is playing, or for current track metadata.
     """
-    script = f'''
+    script = f"""
     {_track_summary_handler()}
 
     tell application "Music"
@@ -112,7 +112,7 @@ def get_music_playback_status() -> str:
             return "Music is " & stateText & ". No current track details are available."
         end try
     end tell
-    '''
+    """
     return run_applescript(script)
 
 
@@ -145,20 +145,20 @@ def control_music_playback(action: str, position_seconds: Optional[int] = None) 
         if position_seconds is None:
             return "position_seconds is required when action is 'seek'."
         position_seconds = max(0, position_seconds)
-        script = f'''
+        script = f"""
         tell application "Music"
             set player position to {position_seconds}
             return "Music playback position set to {position_seconds}s."
         end tell
-        '''
+        """
         return run_applescript(script)
 
-    script = f'''
+    script = f"""
     tell application "Music"
         {normalized}
         return "Executed Music command: {normalized}."
     end tell
-    '''
+    """
     return run_applescript(script)
 
 
@@ -198,12 +198,12 @@ def set_music_playback_options(
         messages.append(f"repeat {normalized_repeat}")
 
     updates = "\n        ".join(update_lines)
-    script = f'''
+    script = f"""
     tell application "Music"
         {updates}
         return "Music playback options updated: {escape_applescript_string(", ".join(messages))}."
     end tell
-    '''
+    """
     return run_applescript(script)
 
 
@@ -233,9 +233,21 @@ def search_music_library(
 
     safe_query = escape_applescript_string(query)
     max_results = _clamp(max_results, 1, 50)
-    search_modifier = f" {MUSIC_SEARCH_TYPES[normalized_type]}" if MUSIC_SEARCH_TYPES[normalized_type] else ""
-    source_script = _playlist_lookup_script(playlist_name, "sourcePlaylist") if playlist_name else "set sourcePlaylist to library playlist 1"
-    missing_playlist_check = 'if sourcePlaylist is missing value then return "No matching Music playlist found."' if playlist_name else ""
+    search_modifier = (
+        f" {MUSIC_SEARCH_TYPES[normalized_type]}"
+        if MUSIC_SEARCH_TYPES[normalized_type]
+        else ""
+    )
+    source_script = (
+        _playlist_lookup_script(playlist_name, "sourcePlaylist")
+        if playlist_name
+        else "set sourcePlaylist to library playlist 1"
+    )
+    missing_playlist_check = (
+        'if sourcePlaylist is missing value then return "No matching Music playlist found."'
+        if playlist_name
+        else ""
+    )
 
     script = f'''
     {_track_summary_handler()}
@@ -286,8 +298,16 @@ def play_music_track(
     safe_artist = escape_applescript_string(artist)
     safe_album = escape_applescript_string(album)
     shuffle_value = "true" if shuffle else "false"
-    source_script = _playlist_lookup_script(playlist_name, "sourcePlaylist") if playlist_name else "set sourcePlaylist to library playlist 1"
-    missing_playlist_check = 'if sourcePlaylist is missing value then return "No matching Music playlist found."' if playlist_name else ""
+    source_script = (
+        _playlist_lookup_script(playlist_name, "sourcePlaylist")
+        if playlist_name
+        else "set sourcePlaylist to library playlist 1"
+    )
+    missing_playlist_check = (
+        'if sourcePlaylist is missing value then return "No matching Music playlist found."'
+        if playlist_name
+        else ""
+    )
 
     script = f'''
     {_track_summary_handler()}
@@ -382,7 +402,7 @@ def play_music_playlist(playlist_name: str, shuffle: bool = True) -> str:
         return "Music playlist name cannot be empty."
 
     shuffle_value = "true" if shuffle else "false"
-    script = f'''
+    script = f"""
     tell application "Music"
         {_playlist_lookup_script(playlist_name)}
         if targetPlaylist is missing value then return "No matching Music playlist found."
@@ -402,12 +422,14 @@ def play_music_playlist(playlist_name: str, shuffle: bool = True) -> str:
         end try
         return "Playing Music playlist: " & name of targetPlaylist
     end tell
-    '''
+    """
     return run_applescript(script)
 
 
 @tool
-def play_music_recommendations(preference: Optional[str] = "", shuffle: bool = True) -> str:
+def play_music_recommendations(
+    preference: Optional[str] = "", shuffle: bool = True
+) -> str:
     """
     Plays a personalized or recommendation-style Apple Music playlist when one exists in the user's library.
     Call this tool when the user asks for recommended music, their personal mix, favorites mix, new music mix, chill mix, or music chosen for them.
@@ -438,7 +460,7 @@ def play_music_recommendations(preference: Optional[str] = "", shuffle: bool = T
         ]
 
     shuffle_value = "true" if shuffle else "false"
-    script = f'''
+    script = f"""
     tell application "Music"
         set recommendationTerms to {applescript_list(terms)}
         set targetPlaylist to missing value
@@ -479,7 +501,7 @@ def play_music_recommendations(preference: Optional[str] = "", shuffle: bool = T
         play some track of library playlist 1
         return "No recommendation playlist was found, so I started a random track from your Music library."
     end tell
-    '''
+    """
     return run_applescript(script)
 
 
@@ -778,14 +800,14 @@ def rate_current_music_track(rating: int, loved: Optional[bool] = None) -> str:
     if loved is not None:
         loved_line = f"set loved of current track to {'true' if loved else 'false'}"
 
-    script = f'''
+    script = f"""
     tell application "Music"
         if player state is stopped then return "No current Music track is playing."
         set rating of current track to {music_rating}
         {loved_line}
         return "Current Music track rated {rating} stars."
     end tell
-    '''
+    """
     return run_applescript(script)
 
 

@@ -6,7 +6,9 @@ from .core import escape_applescript_string, run_applescript
 
 
 @tool
-def show_mac_notification(title: str, message: str, subtitle: Optional[str] = "") -> str:
+def show_mac_notification(
+    title: str, message: str, subtitle: Optional[str] = ""
+) -> str:
     """
     Shows a macOS notification.
     Call this tool when the user asks to notify them, alert them, or show a local notification.
@@ -29,7 +31,9 @@ def show_mac_notification(title: str, message: str, subtitle: Optional[str] = ""
 
 
 @tool
-def speak_mac_text(text: str, voice: Optional[str] = None, wait_until_done: bool = True) -> str:
+def speak_mac_text(
+    text: str, voice: Optional[str] = None, wait_until_done: bool = True
+) -> str:
     """
     Speaks text aloud using the macOS system voice.
     Call this tool when the user asks you to say, announce, or read something out loud.
@@ -47,7 +51,9 @@ def speak_mac_text(text: str, voice: Optional[str] = None, wait_until_done: bool
     waiting_clause = " waiting until completion true" if wait_until_done else ""
     script = f'say "{safe_text}"{voice_clause}{waiting_clause}'
     run_applescript(script)
-    return "Spoken feedback completed." if wait_until_done else "Spoken feedback started."
+    return (
+        "Spoken feedback completed." if wait_until_done else "Spoken feedback started."
+    )
 
 
 feedback_tools = [

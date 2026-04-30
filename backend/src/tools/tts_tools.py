@@ -44,6 +44,7 @@ KOKORO_SPEED_BY_LANGUAGE = {
     "other": float(os.getenv("VIVA_TTS_FALLBACK_SPEED", "1.0")),
 }
 
+
 @dataclass(frozen=True)
 class TTSAudioResult:
     path: Path
@@ -269,7 +270,9 @@ class VivaTTSService:
         return total_samples / sample_rate
 
 
-def synthesize_speech_to_file(text: str, output_dir: str | Path | None = None) -> TTSAudioResult:
+def synthesize_speech_to_file(
+    text: str, output_dir: str | Path | None = None
+) -> TTSAudioResult:
     return VivaTTSService(output_dir=output_dir).synthesize_to_file(text)
 
 

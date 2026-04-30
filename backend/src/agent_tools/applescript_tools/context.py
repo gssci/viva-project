@@ -37,7 +37,7 @@ def get_active_safari_url() -> str:
     Gets the URL and title of the currently active, frontmost tab in Safari.
     Call this tool when the user asks questions about "this article", "the page I'm reading", or asks you to scrape their current context.
     """
-    script = '''
+    script = """
     tell application "Safari"
         if it is running then
             set currentTab to current tab of front window
@@ -48,7 +48,7 @@ def get_active_safari_url() -> str:
             return "Safari is not currently running."
         end if
     end tell
-    '''
+    """
     return run_applescript(script)
 
 
@@ -58,7 +58,7 @@ def get_finder_selection_path() -> str:
     Returns the POSIX path of the file or folder currently selected in Finder.
     Call this tool when the user asks you to read, modify, or do something with "the selected file" or "this file in Finder".
     """
-    script = '''
+    script = """
     tell application "Finder"
         set selectedItems to selection
         if (count of selectedItems) = 0 then
@@ -67,7 +67,7 @@ def get_finder_selection_path() -> str:
         set theItem to item 1 of selectedItems
         return POSIX path of (theItem as alias)
     end tell
-    '''
+    """
     return run_applescript(script)
 
 

@@ -9,7 +9,7 @@ from .core import escape_applescript_string, run_applescript
 
 
 def _selected_finder_paths() -> list[str]:
-    script = '''
+    script = """
     tell application "Finder"
         set selectedItems to selection
         if (count of selectedItems) = 0 then return ""
@@ -19,7 +19,7 @@ def _selected_finder_paths() -> list[str]:
         end repeat
         return output
     end tell
-    '''
+    """
     result = run_applescript(script)
     if result.startswith("Script execution error") or not result:
         return []
@@ -154,14 +154,14 @@ def duplicate_finder_selection() -> str:
     Duplicates the selected Finder items in their current folder.
     Call this tool when the user asks to duplicate selected files or folders.
     """
-    script = '''
+    script = """
     tell application "Finder"
         set selectedItems to selection
         if (count of selectedItems) = 0 then return "No items selected in Finder."
         duplicate selectedItems
         return "Selected Finder items duplicated."
     end tell
-    '''
+    """
     return run_applescript(script)
 
 
@@ -210,7 +210,9 @@ def compress_finder_selection(output_zip_path: Optional[str] = None) -> str:
 
     output_path.parent.mkdir(parents=True, exist_ok=True)
     try:
-        with zipfile.ZipFile(output_path, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        with zipfile.ZipFile(
+            output_path, "w", compression=zipfile.ZIP_DEFLATED
+        ) as archive:
             used_names: set[str] = set()
             for index, selected_path in enumerate(paths, start=1):
                 source = Path(selected_path)
@@ -224,7 +226,9 @@ def compress_finder_selection(output_zip_path: Optional[str] = None) -> str:
                 if source.is_dir():
                     for child in source.rglob("*"):
                         if child.is_file():
-                            archive.write(child, Path(root_name) / child.relative_to(source))
+                            archive.write(
+                                child, Path(root_name) / child.relative_to(source)
+                            )
                 else:
                     archive.write(source, root_name)
     except OSError as exc:

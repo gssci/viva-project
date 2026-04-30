@@ -20,13 +20,14 @@ from tools.tts_tools import DEFAULT_OUTPUT_DIR, VivaTTSService
 logging.basicConfig(
     level=logging.INFO,
     format="%(asctime)s [%(levelname)s] %(message)s",
-    datefmt="%Y-%m-%d %H:%M:%S"
+    datefmt="%Y-%m-%d %H:%M:%S",
 )
 logger = logging.getLogger(__name__)
 
 MODEL_REPO = "mlx-community/whisper-large-v3-mlx"
 TTS_OUTPUT_DIR = Path(os.getenv("VIVA_TTS_OUTPUT_DIR", str(DEFAULT_OUTPUT_DIR)))
 TTS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+
 
 def _warm_up_whisper_model() -> None:
     dummy_audio = np.zeros(16000, dtype=np.float32)
@@ -40,10 +41,13 @@ def _transcribe_audio_file(temp_audio_path: str) -> dict:
         verbose=True,
     )
 
+
 # --- 2. Startup Event (Model Pre-loading) ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info(f"Server initializing. Pre-loading model '{MODEL_REPO}' into Apple Silicon unified memory...")
+    logger.info(
+        f"Server initializing. Pre-loading model '{MODEL_REPO}' into Apple Silicon unified memory..."
+    )
     start_time = time.time()
 
     # Warm up Whisper off the event loop and initialize the LangChain agent once.
@@ -58,11 +62,14 @@ async def lifespan(app: FastAPI):
         logger.info("Pre-loading TTS model into memory...")
         await asyncio.to_thread(app.state.tts_service.warm_up)
 
-    logger.info(f"Model successfully loaded and cached in {time.time() - start_time:.2f} seconds.")
+    logger.info(
+        f"Model successfully loaded and cached in {time.time() - start_time:.2f} seconds."
+    )
     logger.info("Server is ready to accept requests!")
     yield
 
     logger.info("Server shutting down.")
+
 
 # Initialize FastAPI with the lifespan context
 app = FastAPI(lifespan=lifespan)
@@ -72,6 +79,7 @@ app.mount(
     name="generated-audio",
 )
 
+
 async def _clear_active_viva_task(
     request: Request,
     request_id: str,
@@ -80,6 +88,7 @@ async def _clear_active_viva_task(
     async with request.app.state.active_viva_task_lock:
         if request.app.state.active_viva_tasks.get(request_id) is task:
             del request.app.state.active_viva_tasks[request_id]
+
 
 @app.post("/viva")
 async def viva(
@@ -94,12 +103,16 @@ async def viva(
 
     viva_request_id = (request_id or str(uuid.uuid4())).strip()
     if not viva_request_id:
-        raise HTTPException(status_code=400, detail="The 'request_id' field cannot be empty.")
+        raise HTTPException(
+            status_code=400, detail="The 'request_id' field cannot be empty."
+        )
 
     current_task = asyncio.current_task()
     async with request.app.state.active_viva_task_lock:
         if viva_request_id in request.app.state.active_viva_tasks:
-            raise HTTPException(status_code=409, detail="A Viva request with this id is already active.")
+            raise HTTPException(
+                status_code=409, detail="A Viva request with this id is already active."
+            )
         request.app.state.active_viva_tasks[viva_request_id] = current_task
 
     screenshot_bytes: bytes | None = None
@@ -130,7 +143,9 @@ async def viva(
     except Exception as exc:
         await _clear_active_viva_task(request, viva_request_id, current_task)
         logger.exception("Viva request failed: %s", exc)
-        raise HTTPException(status_code=500, detail="Viva backend request failed.") from exc
+        raise HTTPException(
+            status_code=500, detail="Viva backend request failed."
+        ) from exc
 
     process_duration = time.time() - start_time
     logger.info("Viva response text generated in %.2f seconds.", process_duration)
@@ -181,6 +196,7 @@ async def viva(
         **audio_payload,
     }
 
+
 @app.post("/viva/cancel/{request_id}")
 async def cancel_viva(request: Request, request_id: str):
     async with request.app.state.active_viva_task_lock:
@@ -200,44 +216,46 @@ async def cancel_viva(request: Request, request_id: str):
         "cancelled": True,
     }
 
+
 @app.post("/transcribe")
 async def transcribe(file: UploadFile = File(...)):
     logger.info(f"Received new audio file: {file.filename}")
-    
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=".wav") as temp_audio:
         temp_audio.write(await file.read())
         temp_audio_path = temp_audio.name
-        
+
     try:
         logger.info("Starting Whisper inference...")
         start_time = time.time()
-        
+
         # --- 3. Verbose Inference & Language Detection ---
         # verbose=True forces whisper to log chunk processing
         # Language is automatically detected by Whisper if not specified
         output = await asyncio.to_thread(_transcribe_audio_file, temp_audio_path)
-        
+
         process_duration = time.time() - start_time
-        
+
         # Extract metadata
         text = output.get("text", "").strip()
         language = output.get("language", "unknown")
-        
+
         # Log the performance and metadata
         logger.info(f"Inference completed in {process_duration:.2f} seconds.")
         logger.info(f"Auto-detected Language: {language}")
         logger.info(f"Transcribed Text: {text}")
-        
-        # We also return the language and processing time to the frontend API payload 
+
+        # We also return the language and processing time to the frontend API payload
         # just in case you want to display it in SwiftUI later!
         return {
             "text": text,
             "language": language,
-            "processing_time": round(process_duration, 2)
+            "processing_time": round(process_duration, 2),
         }
     finally:
         if os.path.exists(temp_audio_path):
             os.remove(temp_audio_path)
+
 
 if __name__ == "__main__":
     # Standard Uvicorn startup

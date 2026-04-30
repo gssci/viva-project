@@ -102,6 +102,7 @@ def _extract_response_text(response: dict[str, Any]) -> str:
             return text
     return ""
 
+
 @before_model
 def trim_messages(state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
     """Keep only the last few messages to fit context window."""
@@ -114,12 +115,8 @@ def trim_messages(state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
     recent_messages = messages[-3:] if len(messages) % 2 == 0 else messages[-4:]
     new_messages = [first_msg] + recent_messages
 
-    return {
-        "messages": [
-            RemoveMessage(id=REMOVE_ALL_MESSAGES),
-            *new_messages
-        ]
-    }
+    return {"messages": [RemoveMessage(id=REMOVE_ALL_MESSAGES), *new_messages]}
+
 
 class VivaAgentService:
     def __init__(self) -> None:

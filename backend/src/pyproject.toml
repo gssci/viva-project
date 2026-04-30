@@ -21,3 +21,8 @@ dependencies = [
     "trafilatura>=2.0.0",
     "uvicorn>=0.44.0",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.12",
+]

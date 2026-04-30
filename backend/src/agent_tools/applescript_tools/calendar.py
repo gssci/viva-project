@@ -16,26 +16,30 @@ from .core import (
 )
 
 
-def _calendar_attendee_script(attendee_emails: Optional[str], event_variable: str = "newEvent") -> str:
+def _calendar_attendee_script(
+    attendee_emails: Optional[str], event_variable: str = "newEvent"
+) -> str:
     attendees = parse_csv_values(attendee_emails)
     if not attendees:
         return ""
-    return f'''
+    return f"""
         set attendeeEmails to {applescript_list(attendees)}
         repeat with attendeeEmail in attendeeEmails
             make new attendee at end of attendees of {event_variable} with properties {{email:(attendeeEmail as text)}}
         end repeat
-    '''
+    """
 
 
-def _calendar_alarm_script(alarm_minutes_before: Optional[int], event_variable: str = "newEvent") -> str:
+def _calendar_alarm_script(
+    alarm_minutes_before: Optional[int], event_variable: str = "newEvent"
+) -> str:
     if alarm_minutes_before is None:
         return ""
     if alarm_minutes_before < 0 or alarm_minutes_before > 10080:
         raise ValueError("Alarm minutes must be between 0 and 10080.")
-    return f'''
+    return f"""
         make new display alarm at end of display alarms of {event_variable} with properties {{trigger interval:-{alarm_minutes_before}}}
-    '''
+    """
 
 
 @tool
@@ -44,7 +48,7 @@ def list_mac_calendars() -> str:
     Lists the available calendars in the Apple Calendar app.
     Call this tool when the user asks what calendars they have or when you need a calendar name before creating an event.
     """
-    script = '''
+    script = """
     tell application "Calendar"
         set output to ""
         repeat with c in calendars
@@ -63,7 +67,7 @@ def list_mac_calendars() -> str:
         if output is "" then return "No calendars found."
         return output
     end tell
-    '''
+    """
     return run_applescript(script)
 
 
@@ -181,7 +185,7 @@ def list_mac_calendar_events(
         else "every event of c whose start date is greater than or equal to rangeStart and start date is less than rangeEnd"
     )
 
-    script = f'''
+    script = f"""
     tell application "Calendar"
         {calendars_to_search_script(calendar_name)}
         {applescript_date_assignment("rangeStart", range_start)}
@@ -207,7 +211,7 @@ def list_mac_calendar_events(
         if output is "" then return "No calendar events found."
         return output
     end tell
-    '''
+    """
     return run_applescript(script)
 
 
@@ -276,7 +280,9 @@ def update_mac_calendar_event(
             search_end_datetime,
             365,
         )
-        start = parse_calendar_datetime(new_start_datetime) if new_start_datetime else None
+        start = (
+            parse_calendar_datetime(new_start_datetime) if new_start_datetime else None
+        )
         end = parse_calendar_datetime(new_end_datetime) if new_end_datetime else None
 
         if all_day is True:
@@ -299,15 +305,25 @@ def update_mac_calendar_event(
     safe_query = escape_applescript_string(event_query)
     update_lines = []
     if new_title is not None:
-        update_lines.append(f'set summary of targetEvent to "{escape_applescript_string(new_title)}"')
+        update_lines.append(
+            f'set summary of targetEvent to "{escape_applescript_string(new_title)}"'
+        )
     if new_location is not None:
-        update_lines.append(f'set location of targetEvent to "{escape_applescript_string(new_location)}"')
+        update_lines.append(
+            f'set location of targetEvent to "{escape_applescript_string(new_location)}"'
+        )
     if new_notes is not None:
-        update_lines.append(f'set description of targetEvent to "{escape_applescript_string(new_notes)}"')
+        update_lines.append(
+            f'set description of targetEvent to "{escape_applescript_string(new_notes)}"'
+        )
     if new_url is not None:
-        update_lines.append(f'set url of targetEvent to "{escape_applescript_string(new_url)}"')
+        update_lines.append(
+            f'set url of targetEvent to "{escape_applescript_string(new_url)}"'
+        )
     if all_day is not None:
-        update_lines.append(f'set allday event of targetEvent to {"true" if all_day else "false"}')
+        update_lines.append(
+            f"set allday event of targetEvent to {'true' if all_day else 'false'}"
+        )
 
     date_assignments = ""
     if start:
@@ -316,7 +332,9 @@ def update_mac_calendar_event(
         date_assignments += applescript_date_assignment("newEnd", end)
 
     if start and not end:
-        update_lines.append("set eventDuration to (end date of targetEvent) - (start date of targetEvent)")
+        update_lines.append(
+            "set eventDuration to (end date of targetEvent) - (start date of targetEvent)"
+        )
         update_lines.append("set start date of targetEvent to newStart")
         update_lines.append("set end date of targetEvent to newStart + eventDuration")
     elif start:
@@ -324,7 +342,9 @@ def update_mac_calendar_event(
     if end:
         update_lines.append("set end date of targetEvent to newEnd")
     if add_attendee_emails:
-        update_lines.append(_calendar_attendee_script(add_attendee_emails, "targetEvent"))
+        update_lines.append(
+            _calendar_attendee_script(add_attendee_emails, "targetEvent")
+        )
     if alarm_script:
         update_lines.append(alarm_script)
 
@@ -433,7 +453,9 @@ def show_mac_calendar_event(
     if not event_query.strip():
         return "Calendar event search text cannot be empty."
     try:
-        range_start, range_end = calendar_range(search_start_datetime, search_end_datetime, 365)
+        range_start, range_end = calendar_range(
+            search_start_datetime, search_end_datetime, 365
+        )
     except ValueError as exc:
         return f"Invalid calendar date/time: {exc}"
 
@@ -483,7 +505,7 @@ def check_mac_calendar_conflicts(
         return f"Invalid calendar date/time: {exc}"
 
     max_results = max(1, min(50, max_results))
-    script = f'''
+    script = f"""
     tell application "Calendar"
         {calendars_to_search_script(calendar_name)}
         {applescript_date_assignment("rangeStart", range_start)}
@@ -502,7 +524,7 @@ def check_mac_calendar_conflicts(
         if output is "" then return "No calendar conflicts found."
         return output
     end tell
-    '''
+    """
     return run_applescript(script)
 
 
@@ -534,7 +556,7 @@ def find_mac_calendar_free_slots(
 
     max_results = max(1, min(20, max_results))
     slot_seconds = duration_minutes * 60
-    script = f'''
+    script = f"""
     tell application "Calendar"
         {calendars_to_search_script(calendar_name)}
         {applescript_date_assignment("rangeStart", range_start)}
@@ -563,7 +585,7 @@ def find_mac_calendar_free_slots(
         if output is "" then return "No free calendar slots found."
         return output
     end tell
-    '''
+    """
     return run_applescript(script)
 
 

@@ -23,7 +23,7 @@ def list_mac_reminder_lists() -> str:
     Lists the available Apple Reminders lists.
     Call this tool when the user asks what reminder lists they have or where a reminder can be added.
     """
-    script = '''
+    script = """
     tell application "Reminders"
         set output to ""
         repeat with reminderList in lists
@@ -32,7 +32,7 @@ def list_mac_reminder_lists() -> str:
         if output is "" then return "No reminder lists found."
         return output
     end tell
-    '''
+    """
     return run_applescript(script)
 
 
@@ -96,8 +96,10 @@ def list_mac_reminders(list_name: Optional[str] = None) -> str:
     Args:
         list_name: (Optional) If specified, searches only within that specific list (e.g., "Work", "Groceries").
     """
-    list_filter = f'of list "{escape_applescript_string(list_name)}"' if list_name else ""
-    script = f'''
+    list_filter = (
+        f'of list "{escape_applescript_string(list_name)}"' if list_name else ""
+    )
+    script = f"""
     tell application "Reminders"
         set output to ""
         try
@@ -122,7 +124,7 @@ def list_mac_reminders(list_name: Optional[str] = None) -> str:
             return "Error: The specified list might not exist."
         end try
     end tell
-    '''
+    """
     return run_applescript(script)
 
 
@@ -199,7 +201,10 @@ def update_mac_reminder(
     """
     if not name_query.strip():
         return "Reminder search text cannot be empty."
-    if not any(value is not None for value in [new_name, new_body, new_list_name, new_due_datetime, new_priority]):
+    if not any(
+        value is not None
+        for value in [new_name, new_body, new_list_name, new_due_datetime, new_priority]
+    ):
         return "No reminder changes were provided."
     if new_name is not None and not new_name.strip():
         return "New reminder name cannot be empty."
@@ -213,9 +218,13 @@ def update_mac_reminder(
     date_assignment = ""
     update_lines = []
     if new_name is not None:
-        update_lines.append(f'set name of targetReminder to "{escape_applescript_string(new_name)}"')
+        update_lines.append(
+            f'set name of targetReminder to "{escape_applescript_string(new_name)}"'
+        )
     if new_body is not None:
-        update_lines.append(f'set body of targetReminder to "{escape_applescript_string(new_body)}"')
+        update_lines.append(
+            f'set body of targetReminder to "{escape_applescript_string(new_body)}"'
+        )
     if new_priority is not None:
         update_lines.append(f"set priority of targetReminder to {new_priority}")
     if new_due_datetime:
@@ -226,7 +235,9 @@ def update_mac_reminder(
         date_assignment = applescript_date_assignment("newDueDate", due_date)
         update_lines.append("set due date of targetReminder to newDueDate")
     if new_list_name:
-        update_lines.append(f'move targetReminder to list "{escape_applescript_string(new_list_name)}"')
+        update_lines.append(
+            f'move targetReminder to list "{escape_applescript_string(new_list_name)}"'
+        )
 
     safe_query = escape_applescript_string(name_query)
     updates_script = "\n        ".join(update_lines)

@@ -25,10 +25,10 @@ def get_mac_battery_status() -> str:
     Returns battery percentage, power source, and charging status.
     Call this tool when the user asks about battery, charging, or power state.
     """
-    script = '''
+    script = """
     set batteryInfo to do shell script "pmset -g batt | sed -e 's/^[[:space:]]*//'"
     return batteryInfo
-    '''
+    """
     return run_applescript(script)
 
 
@@ -38,13 +38,13 @@ def get_mac_wifi_status() -> str:
     Returns the current Wi-Fi interface, power state, and connected network if available.
     Call this tool when the user asks about Wi-Fi or network state.
     """
-    script = '''
+    script = """
     set wifiDevice to do shell script "networksetup -listallhardwareports | awk '/Wi-Fi|AirPort/{getline; print $2; exit}'"
     if wifiDevice is "" then return "No Wi-Fi hardware port found."
     set powerState to do shell script "networksetup -getairportpower " & wifiDevice
     set networkName to do shell script "networksetup -getairportnetwork " & wifiDevice & " 2>/dev/null | sed 's/^Current Wi-Fi Network: //'"
     return powerState & "\\nNetwork: " & networkName
-    '''
+    """
     return run_applescript(script)
 
 
@@ -54,14 +54,14 @@ def get_frontmost_app_info() -> str:
     Returns the frontmost application name and bundle identifier.
     Call this tool when the user asks what app is active or what they are using.
     """
-    script = '''
+    script = """
     tell application "System Events"
         set frontProcess to first application process whose frontmost is true
         set appName to name of frontProcess
         set bundleId to bundle identifier of frontProcess
         return appName & " | " & bundleId
     end tell
-    '''
+    """
     return run_applescript(script)
 
 
@@ -71,12 +71,12 @@ def get_mac_system_summary() -> str:
     Returns a concise macOS hardware and OS summary.
     Call this tool when the user asks about this Mac or system information.
     """
-    script = '''
+    script = """
     set osInfo to do shell script "sw_vers | paste -sd '; ' -"
     set modelInfo to do shell script "sysctl -n hw.model"
     set chipInfo to do shell script "sysctl -n machdep.cpu.brand_string 2>/dev/null || true"
     return modelInfo & "\\n" & chipInfo & "\\n" & osInfo
-    '''
+    """
     return run_applescript(script)
 
 

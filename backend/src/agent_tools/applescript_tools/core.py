@@ -51,18 +51,11 @@ def escape_applescript_string(value: Optional[str]) -> str:
 def parse_csv_values(value: Optional[str], max_items: int = 20) -> list[str]:
     if not value:
         return []
-    return [
-        item.strip()
-        for item in value.split(",")
-        if item.strip()
-    ][:max_items]
+    return [item.strip() for item in value.split(",") if item.strip()][:max_items]
 
 
 def applescript_list(values: list[str]) -> str:
-    escaped_values = [
-        f'"{escape_applescript_string(value)}"'
-        for value in values
-    ]
+    escaped_values = [f'"{escape_applescript_string(value)}"' for value in values]
     return "{" + ", ".join(escaped_values) + "}"
 
 
@@ -98,9 +91,7 @@ def parse_calendar_datetime(value: str) -> dt.datetime:
                 continue
 
         if parsed is None:
-            raise ValueError(
-                "Use an ISO-like date/time, such as 2026-04-28 14:30."
-            )
+            raise ValueError("Use an ISO-like date/time, such as 2026-04-28 14:30.")
 
     if parsed.tzinfo:
         parsed = parsed.astimezone().replace(tzinfo=None)
@@ -109,20 +100,16 @@ def parse_calendar_datetime(value: str) -> dt.datetime:
 
 def applescript_date_assignment(variable_name: str, value: dt.datetime) -> str:
     """Builds AppleScript statements that assign a specific local date/time."""
-    seconds_since_midnight = (
-        value.hour * 3600
-        + value.minute * 60
-        + value.second
-    )
+    seconds_since_midnight = value.hour * 3600 + value.minute * 60 + value.second
     month_name = APPLESCRIPT_MONTHS[value.month - 1]
-    return f'''
+    return f"""
         set {variable_name} to current date
         set day of {variable_name} to 1
         set year of {variable_name} to {value.year}
         set month of {variable_name} to {month_name}
         set day of {variable_name} to {value.day}
         set time of {variable_name} to {seconds_since_midnight}
-    '''
+    """
 
 
 def calendar_range(
