@@ -4,11 +4,16 @@ import logging
 import os
 from typing import Any
 
-from langchain.agents import create_agent
+from langchain.agents import create_agent, AgentState
 from langchain.messages import HumanMessage
+from langchain.messages import RemoveMessage
+from langgraph.graph.message import REMOVE_ALL_MESSAGES
 from langchain_openai import ChatOpenAI
 from agent_tools import all_agent_tools
 from langgraph.checkpoint.memory import InMemorySaver
+from langchain.agents.middleware import before_model
+from langgraph.runtime import Runtime
+from langchain_core.runnables import RunnableConfig
 
 logger = logging.getLogger(__name__)
 
@@ -97,6 +102,24 @@ def _extract_response_text(response: dict[str, Any]) -> str:
             return text
     return ""
 
+@before_model
+def trim_messages(state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
+    """Keep only the last few messages to fit context window."""
+    messages = state["messages"]
+
+    if len(messages) <= 3:
+        return None  # No changes needed
+
+    first_msg = messages[0]
+    recent_messages = messages[-3:] if len(messages) % 2 == 0 else messages[-4:]
+    new_messages = [first_msg] + recent_messages
+
+    return {
+        "messages": [
+            RemoveMessage(id=REMOVE_ALL_MESSAGES),
+            *new_messages
+        ]
+    }
 
 class VivaAgentService:
     def __init__(self) -> None:
@@ -121,6 +144,7 @@ class VivaAgentService:
                 model=llm,
                 tools=all_agent_tools,
                 system_prompt=SYSTEM_PROMPT,
+                middleware=[trim_messages],
                 checkpointer=InMemorySaver(),
             )
             logger.info("Viva agent initialized with model '%s'.", OLLAMA_MODEL)
@@ -141,10 +165,12 @@ class VivaAgentService:
             screenshot_filename=screenshot_filename,
         )
 
+        config: RunnableConfig = {"configurable": {"thread_id": "1"}}
+
         async with self._invocation_lock:
             response = await self._agent.ainvoke(
                 {"messages": [user_message]},
-                config={"thread_id": 0},
+                config=config,
             )
 
         response_text = _extract_response_text(response)
