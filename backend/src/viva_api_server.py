@@ -95,6 +95,7 @@ async def viva(
     request: Request,
     text: str = Form(...),
     request_id: str | None = Form(default=None),
+    tts_enabled: bool = Form(default=True),
     screenshot: UploadFile | None = File(default=None),
 ):
     clean_text = text.strip()
@@ -160,24 +161,27 @@ async def viva(
     }
 
     try:
-        tts_result = await asyncio.to_thread(
-            request.app.state.tts_service.synthesize_to_file,
-            response_text,
-        )
-        if current_task is not None and current_task.cancelling():
-            raise asyncio.CancelledError
-        audio_payload.update(
-            {
-                "audio_url": (
-                    str(request.base_url).rstrip("/")
-                    + f"/generated-audio/{tts_result.path.name}"
-                ),
-                "audio_content_type": "audio/wav",
-                "tts_language": tts_result.language,
-                "tts_voice": tts_result.voice,
-                "tts_processing_time": tts_result.processing_time,
-            }
-        )
+        if tts_enabled:
+            tts_result = await asyncio.to_thread(
+                request.app.state.tts_service.synthesize_to_file,
+                response_text,
+            )
+            if current_task is not None and current_task.cancelling():
+                raise asyncio.CancelledError
+            audio_payload.update(
+                {
+                    "audio_url": (
+                        str(request.base_url).rstrip("/")
+                        + f"/generated-audio/{tts_result.path.name}"
+                    ),
+                    "audio_content_type": "audio/wav",
+                    "tts_language": tts_result.language,
+                    "tts_voice": tts_result.voice,
+                    "tts_processing_time": tts_result.processing_time,
+                }
+            )
+        else:
+            logger.info("TTS generation skipped. request_id=%s", viva_request_id)
     except asyncio.CancelledError as exc:
         logger.info("Viva request cancelled during TTS. request_id=%s", viva_request_id)
         raise HTTPException(status_code=499, detail="Viva request cancelled.") from exc

@@ -5,14 +5,15 @@ import os
 from typing import Any
 
 from langchain.agents import create_agent, AgentState
-from langchain.messages import HumanMessage
-from langchain.messages import RemoveMessage
+from langchain.messages import AIMessage, HumanMessage
+from langchain.messages import RemoveMessage, SystemMessage
 from langgraph.graph.message import REMOVE_ALL_MESSAGES
 from langchain_openai import ChatOpenAI
 from agent_tools import all_agent_tools
 from langgraph.checkpoint.memory import InMemorySaver
 from langchain.agents.middleware import before_model
 from langgraph.runtime import Runtime
+from langchain_core.messages import BaseMessage
 from langchain_core.runnables import RunnableConfig
 
 logger = logging.getLogger(__name__)
@@ -21,6 +22,7 @@ OLLAMA_MODEL = os.getenv("VIVA_OLLAMA_MODEL", "gemma4:26b")
 OLLAMA_BASE_URL = os.getenv("VIVA_OLLAMA_BASE_URL", "http://localhost:11434/v1/")
 OLLAMA_API_KEY = os.getenv("VIVA_OLLAMA_API_KEY", "ollama")
 DEFAULT_IMAGE_MIME_TYPE = "image/jpeg"
+MAX_HISTORY_MESSAGES = 5
 
 SYSTEM_PROMPT = (
     "You are Viva, a useful, concise and action-oriented assistant. "
@@ -74,20 +76,36 @@ def _build_user_message(
     )
 
 
+def _text_from_content_block(block: Any) -> str:
+    if isinstance(block, str):
+        return block.strip()
+
+    if isinstance(block, dict):
+        if block.get("type") in {"text", "text-plain"} and block.get("text"):
+            return str(block["text"]).strip()
+        return ""
+
+    block_type = getattr(block, "type", None)
+    text = getattr(block, "text", None)
+    if block_type in {"text", "text-plain"} and text:
+        return str(text).strip()
+
+    return ""
+
+
 def _format_message_content(content: Any) -> str:
     if isinstance(content, str):
         return content.strip()
 
+    if isinstance(content, dict):
+        return _text_from_content_block(content)
+
     if isinstance(content, list):
         text_chunks: list[str] = []
         for item in content:
-            if isinstance(item, dict):
-                if item.get("type") == "text" and item.get("text"):
-                    text_chunks.append(str(item["text"]))
-            elif hasattr(item, "text") and getattr(item, "text"):
-                text_chunks.append(str(item.text))
-            elif item:
-                text_chunks.append(str(item))
+            text = _text_from_content_block(item)
+            if text:
+                text_chunks.append(text)
         return "\n".join(chunk.strip() for chunk in text_chunks if chunk).strip()
 
     return str(content).strip()
@@ -103,18 +121,66 @@ def _extract_response_text(response: dict[str, Any]) -> str:
     return ""
 
 
+def _latest_human_message_index(messages: list[BaseMessage]) -> int | None:
+    for index in range(len(messages) - 1, -1, -1):
+        if isinstance(messages[index], HumanMessage):
+            return index
+    return None
+
+
+def _clean_history_message(message: BaseMessage) -> BaseMessage | None:
+    text = _format_message_content(message.content)
+    if not text:
+        return None
+
+    if isinstance(message, SystemMessage):
+        return SystemMessage(content=text)
+
+    if isinstance(message, HumanMessage):
+        return HumanMessage(content=text)
+
+    if isinstance(message, AIMessage) and not message.tool_calls:
+        return AIMessage(content=text)
+
+    return None
+
+
 @before_model
 def trim_messages(state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
-    """Keep only the last few messages to fit context window."""
+    """Keep compact text-only conversation history before each model call."""
     messages = state["messages"]
 
-    if len(messages) <= 3:
-        return None  # No changes needed
+    current_turn_start = _latest_human_message_index(messages)
+    if current_turn_start is None:
+        history_messages = messages
+        current_turn_messages: list[BaseMessage] = []
+    else:
+        history_messages = messages[:current_turn_start]
+        current_turn_messages = messages[current_turn_start:]
 
-    first_msg = messages[0]
-    recent_messages = messages[-3:] if len(messages) % 2 == 0 else messages[-4:]
-    new_messages = [first_msg] + recent_messages
+    system_messages: list[BaseMessage] = []
+    conversation_messages: list[BaseMessage] = []
 
+    for message in history_messages:
+        clean_message = _clean_history_message(message)
+        if clean_message is None:
+            continue
+        if isinstance(clean_message, SystemMessage):
+            system_messages.append(clean_message)
+        else:
+            conversation_messages.append(clean_message)
+
+    compact_history = conversation_messages[-MAX_HISTORY_MESSAGES:]
+    new_messages = [*system_messages, *compact_history, *current_turn_messages]
+
+    if new_messages == messages:
+        return None
+
+    logger.info(
+        "Trimmed conversation history from %d to %d messages.",
+        len(messages),
+        len(new_messages),
+    )
     return {"messages": [RemoveMessage(id=REMOVE_ALL_MESSAGES), *new_messages]}
 
 

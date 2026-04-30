@@ -2,6 +2,14 @@ import SwiftUI
 import SwiftData
 import AppKit
 
+enum VivaUserDefaults {
+    static let playTTSAudioKey = "playTTSAudio"
+}
+
+extension Notification.Name {
+    static let vivaTTSPlaybackDisabled = Notification.Name("vivaTTSPlaybackDisabled")
+}
+
 @main
 struct VivaApp: App {
     @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
@@ -51,9 +59,11 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
     }()
 
     func applicationDidFinishLaunching(_ notification: Notification) {
+        UserDefaults.standard.register(defaults: [VivaUserDefaults.playTTSAudioKey: true])
+
         // 1. Setup the custom floating panel
         floatingPanel = FloatingPanel(
-            contentRect: NSRect(x: 0, y: 0, width: 400, height: 200),
+            contentRect: NSRect(x: 0, y: 0, width: 400, height: 240),
             styleMask: [.nonactivatingPanel, .borderless],
             backing: .buffered,
             defer: false
@@ -98,6 +108,12 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         if event.type == .rightMouseUp {
             // --- RIGHT CLICK: Show Context Menu ---
             let menu = NSMenu()
+
+            let ttsItem = NSMenuItem(title: "Play TTS Audio", action: #selector(toggleTTSAudioPlayback(_:)), keyEquivalent: "")
+            ttsItem.target = self
+            ttsItem.state = UserDefaults.standard.bool(forKey: VivaUserDefaults.playTTSAudioKey) ? .on : .off
+            menu.addItem(ttsItem)
+            menu.addItem(NSMenuItem.separator())
             
             // Settings Option
             menu.addItem(NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ","))
@@ -119,6 +135,16 @@ class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
             } else {
                 showPanel()
             }
+        }
+    }
+
+    @objc func toggleTTSAudioPlayback(_ sender: NSMenuItem) {
+        let isEnabled = !UserDefaults.standard.bool(forKey: VivaUserDefaults.playTTSAudioKey)
+        UserDefaults.standard.set(isEnabled, forKey: VivaUserDefaults.playTTSAudioKey)
+        sender.state = isEnabled ? .on : .off
+
+        if !isEnabled {
+            NotificationCenter.default.post(name: .vivaTTSPlaybackDisabled, object: nil)
         }
     }
     
