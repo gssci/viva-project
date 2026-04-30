@@ -11,17 +11,14 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
 
-import mlx.core as mx
-from langdetect import DetectorFactory, detect, lang_detect_exception
 from mlx_audio.audio_io import write as audio_write
 from mlx_audio.tts.utils import load as load_tts_model
 from trafilatura import extract, fetch_url
 from trafilatura.settings import Extractor
 
-logger = logging.getLogger(__name__)
-DetectorFactory.seed = 0
+from tools.language_tools import detect_language
 
-LanguageCode = Literal["it", "en", "other"]
+logger = logging.getLogger(__name__)
 
 DEFAULT_TTS_MODEL = "prince-canuma/Kokoro-82M"
 DEFAULT_OUTPUT_DIR = Path(tempfile.gettempdir()) / "viva_tts_audio"
@@ -48,27 +45,13 @@ KOKORO_SPEED_BY_LANGUAGE = {
 @dataclass(frozen=True)
 class TTSAudioResult:
     path: Path
-    language: LanguageCode
+    language: str
     voice: str
     sample_rate: int
     duration_seconds: float | None
     processing_time: float
 
 
-def detect_tts_language(text: str) -> LanguageCode:
-    """
-    Detects the input language before choosing Kokoro voice parameters.
-    """
-    try:
-        detected_language = detect(text)
-    except lang_detect_exception.LangDetectException:
-        return "other"
-
-    if detected_language == "it":
-        return "it"
-    if detected_language == "en":
-        return "en"
-    return "other"
 
 
 def _chunk_text_for_tts(text: str, max_chars: int = 220) -> str:
@@ -129,18 +112,6 @@ options = Extractor(
     precision=True,
 )
 
-
-def extract_readable_text_from_url(url: str) -> str:
-    document = fetch_url(url)
-    if not document:
-        raise ValueError(f"Unable to fetch URL: {url}")
-
-    text = extract(document, options=options)
-    if not text:
-        raise ValueError(f"Unable to extract readable text from URL: {url}")
-    return text.strip()
-
-
 class VivaTTSService:
     """
     Thread-safe lazy wrapper around mlx-audio Kokoro generation.
@@ -188,10 +159,10 @@ class VivaTTSService:
         if not clean_text:
             raise ValueError("Cannot synthesize empty text.")
 
-        language = detect_tts_language(clean_text)
-        voice = KOKORO_VOICE_BY_LANGUAGE[language]
-        lang_code = KOKORO_LANG_CODE_BY_LANGUAGE[language]
-        speed = KOKORO_SPEED_BY_LANGUAGE[language]
+        language = detect_language(clean_text)
+        voice = KOKORO_VOICE_BY_LANGUAGE.get(language, KOKORO_VOICE_BY_LANGUAGE["other"])
+        lang_code = KOKORO_LANG_CODE_BY_LANGUAGE.get(language, KOKORO_LANG_CODE_BY_LANGUAGE["other"])
+        speed = KOKORO_SPEED_BY_LANGUAGE.get(language, KOKORO_SPEED_BY_LANGUAGE["other"])
         tts_text = _chunk_text_for_tts(clean_text)
         file_name = f"{uuid.uuid4().hex}.{self.audio_format}"
         audio_path = self.output_dir / file_name

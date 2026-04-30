@@ -7,15 +7,14 @@ import trafilatura
 from ddgs import DDGS
 from langchain_core.tools import tool
 from langchain_experimental.utilities import PythonREPL
-
+from langchain_community.tools import DuckDuckGoSearchResults
 
 logger = logging.getLogger(__name__)
 python_repl = PythonREPL()
 
-
 def _web_search_blocking(query: str, max_results: int) -> str:
     logger.info("Using DDG to search for %s, max_results=%s", query, max_results)
-    results = DDGS().text(query, max_results=max_results)
+    results = DDGS().text(query, max_results=max_results, backend="duckduckgo")
     return str(list(results))
 
 
@@ -55,7 +54,8 @@ async def web_search(query: str, max_results: int = 5) -> str:
 
 @tool
 async def extract_webpage_text(url: str) -> str:
-    """Extracts clean reader-mode text from a web page, ignoring ads and menus."""
+    """Extracts clean reader-mode text from a web page, ignoring ads and menus.
+    Use this tool when you want to read the content of a search result."""
     try:
         return await asyncio.to_thread(_extract_webpage_text_blocking, url)
     except Exception as exc:
