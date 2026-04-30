@@ -9,11 +9,10 @@ import time
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Literal
 
+import mlx.core as mx
 from mlx_audio.audio_io import write as audio_write
 from mlx_audio.tts.utils import load as load_tts_model
-from trafilatura import extract, fetch_url
 from trafilatura.settings import Extractor
 
 from tools.language_tools import detect_language
@@ -50,8 +49,6 @@ class TTSAudioResult:
     sample_rate: int
     duration_seconds: float | None
     processing_time: float
-
-
 
 
 def _chunk_text_for_tts(text: str, max_chars: int = 220) -> str:
@@ -112,6 +109,7 @@ options = Extractor(
     precision=True,
 )
 
+
 class VivaTTSService:
     """
     Thread-safe lazy wrapper around mlx-audio Kokoro generation.
@@ -160,9 +158,15 @@ class VivaTTSService:
             raise ValueError("Cannot synthesize empty text.")
 
         language = detect_language(clean_text)
-        voice = KOKORO_VOICE_BY_LANGUAGE.get(language, KOKORO_VOICE_BY_LANGUAGE["other"])
-        lang_code = KOKORO_LANG_CODE_BY_LANGUAGE.get(language, KOKORO_LANG_CODE_BY_LANGUAGE["other"])
-        speed = KOKORO_SPEED_BY_LANGUAGE.get(language, KOKORO_SPEED_BY_LANGUAGE["other"])
+        voice = KOKORO_VOICE_BY_LANGUAGE.get(
+            language, KOKORO_VOICE_BY_LANGUAGE["other"]
+        )
+        lang_code = KOKORO_LANG_CODE_BY_LANGUAGE.get(
+            language, KOKORO_LANG_CODE_BY_LANGUAGE["other"]
+        )
+        speed = KOKORO_SPEED_BY_LANGUAGE.get(
+            language, KOKORO_SPEED_BY_LANGUAGE["other"]
+        )
         tts_text = _chunk_text_for_tts(clean_text)
         file_name = f"{uuid.uuid4().hex}.{self.audio_format}"
         audio_path = self.output_dir / file_name

@@ -4,6 +4,7 @@ from langdetect import DetectorFactory, detect, lang_detect_exception
 logger = logging.getLogger(__name__)
 DetectorFactory.seed = 0
 
+
 def detect_language(text: str, fallback: str = "other") -> str:
     """
     Detects the input language using langdetect.

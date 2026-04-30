@@ -13,7 +13,7 @@ Speak naturally, and Viva listens, understands, and acts. It can answer question
 | Answer questions and keep conversational context | "What is a concise summary of this topic?" |
 | Search the web | "Search for the latest Python release." |
 | Extract readable text from a web page | "Read this article and summarize it." |
-| Get current weather from coordinates | "What's the weather at my current location?" |
+| Get current weather from a location or coordinates | "What's the weather in Rome?" |
 | Check the current date and time | "What day is it today?" |
 | Change system volume | "Set the Mac volume to 35 percent." |
 | Mute or unmute audio | "Mute my Mac." |
@@ -75,7 +75,7 @@ Viva is designed with privacy as a first-class principle:
 
 - **All AI inference runs locally** — Whisper, your chosen LLM via Ollama, and Qwen TTS all execute on your Mac's Apple Silicon chip.
 - **No cloud AI APIs** — no OpenAI, Google, or Anthropic endpoints are called.
-- **Web search and weather** use DuckDuckGo and Open-Meteo (a free, privacy-respecting weather API that doesn't require authentication or tracking).
+- **Web search and weather** use LangChain's DuckDuckGo integration and Open-Meteo (a free, privacy-respecting weather API that doesn't require authentication or tracking).
 - **Audio recordings** are temporary and deleted immediately after transcription.
 
 ---
