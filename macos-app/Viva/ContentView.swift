@@ -38,7 +38,8 @@ extension NSImage {
 
 // MARK: - Audio Recorder Management
 class AudioRecorder: NSObject, ObservableObject {
-    var audioRecorder: AVAudioRecorder?
+    private let audioEngine = AVAudioEngine()
+    private var audioFile: AVAudioFile?
     var recordingURL: URL?
     
     @Published var isCurrentlyRecording: Bool = false
@@ -51,29 +52,75 @@ class AudioRecorder: NSObject, ObservableObject {
     
     func startRecording() {
         guard let url = recordingURL else { return }
-        let settings: [String: Any] = [
-            AVFormatIDKey: Int(kAudioFormatLinearPCM),
-            AVSampleRateKey: 16000.0,
-            AVNumberOfChannelsKey: 1,
-            AVEncoderAudioQualityKey: AVAudioQuality.high.rawValue,
-            AVLinearPCMBitDepthKey: 16,
-            AVLinearPCMIsFloatKey: false,
-            AVLinearPCMIsBigEndianKey: false
-        ]
+        let inputNode = audioEngine.inputNode
+        
+        // 1. Enable Voice Processing
+        // This ducks background system audio and focuses the hardware on the user's voice
+        if #available(macOS 10.15, *) {
+            do {
+                try inputNode.setVoiceProcessingEnabled(true)
+            } catch {
+                print("Failed to enable voice processing: \(error.localizedDescription)")
+            }
+        }
+        
+        let format = inputNode.outputFormat(forBus: 0)
         
         do {
-            audioRecorder = try AVAudioRecorder(url: url, settings: settings)
-            audioRecorder?.prepareToRecord()
-            audioRecorder?.record()
-            isCurrentlyRecording = true
+            // Initialize the audio file to write the incoming buffers to disk
+            audioFile = try AVAudioFile(forWriting: url, settings: format.settings)
         } catch {
-            print("Failed to start recording: \(error.localizedDescription)")
+            print("Failed to create audio file: \(error.localizedDescription)")
+            return
+        }
+        
+        // 2. Tap the microphone input and write it to the WAV file
+        inputNode.installTap(onBus: 0, bufferSize: 1024, format: format) { [weak self] (buffer, time) in
+            do {
+                try self?.audioFile?.write(from: buffer)
+            } catch {
+                print("Failed to write audio buffer: \(error.localizedDescription)")
+            }
+        }
+        
+        audioEngine.prepare()
+        
+        do {
+            try audioEngine.start()
+            DispatchQueue.main.async {
+                self.isCurrentlyRecording = true
+            }
+        } catch {
+            print("Failed to start audio engine: \(error.localizedDescription)")
         }
     }
     
     func stopRecording() -> URL? {
-        audioRecorder?.stop()
-        isCurrentlyRecording = false
+        // Ensure we don't try to stop an engine that isn't running
+        guard isCurrentlyRecording else { return recordingURL }
+        
+        let inputNode = audioEngine.inputNode
+        
+        // 3. Stop capturing and close the file
+        inputNode.removeTap(onBus: 0)
+        audioEngine.stop()
+        audioFile = nil
+        
+        // 4. CRITICAL: Disable Voice Processing
+        // This releases the hardware focus and tells macOS to restore normal system volume.
+        // Failing to do this causes the OS to hang in "open mic mode".
+        if #available(macOS 10.15, *) {
+            do {
+                try inputNode.setVoiceProcessingEnabled(false)
+            } catch {
+                print("Failed to disable voice processing: \(error.localizedDescription)")
+            }
+        }
+        
+        DispatchQueue.main.async {
+            self.isCurrentlyRecording = false
+        }
+        
         return recordingURL
     }
 }
