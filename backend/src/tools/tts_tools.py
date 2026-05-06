@@ -15,7 +15,7 @@ from mlx_audio.audio_io import write as audio_write
 from mlx_audio.tts.utils import load as load_tts_model
 from trafilatura.settings import Extractor
 
-from tools.language_tools import detect_language
+from tools.language_tools import detect_language, normalize_text_for_tts
 
 logger = logging.getLogger(__name__)
 
@@ -158,6 +158,10 @@ class VivaTTSService:
             raise ValueError("Cannot synthesize empty text.")
 
         language = detect_language(clean_text)
+        normalized_text = normalize_text_for_tts(clean_text, language)
+        if not normalized_text:
+            raise ValueError("Cannot synthesize text after TTS normalization.")
+
         voice = KOKORO_VOICE_BY_LANGUAGE.get(
             language, KOKORO_VOICE_BY_LANGUAGE["other"]
         )
@@ -167,7 +171,7 @@ class VivaTTSService:
         speed = KOKORO_SPEED_BY_LANGUAGE.get(
             language, KOKORO_SPEED_BY_LANGUAGE["other"]
         )
-        tts_text = _chunk_text_for_tts(clean_text)
+        tts_text = _chunk_text_for_tts(normalized_text)
         file_name = f"{uuid.uuid4().hex}.{self.audio_format}"
         audio_path = self.output_dir / file_name
 

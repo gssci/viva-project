@@ -17,6 +17,8 @@ from langdetect import DetectorFactory, detect, lang_detect_exception
 from mlx_audio.audio_io import write as audio_write
 from mlx_audio.tts.utils import load as load_tts_model
 
+from tools.language_tools import normalize_text_for_tts
+
 logger = logging.getLogger(__name__)
 DetectorFactory.seed = 0
 
@@ -261,7 +263,11 @@ class VivaQwenTTSService:
             raise ValueError("Cannot synthesize empty text.")
 
         language = detect_tts_language(clean_text)
-        tts_text = _chunk_text_for_tts(clean_text)
+        normalized_text = normalize_text_for_tts(clean_text, language)
+        if not normalized_text:
+            raise ValueError("Cannot synthesize text after TTS normalization.")
+
+        tts_text = _chunk_text_for_tts(normalized_text)
         audio_path = self._audio_path(output_path)
 
         start_time = time.time()
