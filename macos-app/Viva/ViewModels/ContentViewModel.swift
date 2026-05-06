@@ -65,8 +65,12 @@ final class ContentViewModel: ObservableObject {
             return
         }
 
-        Task {
-            await transcribeAudio(fileURL: url)
+        if UserDefaults.standard.bool(forKey: VivaUserDefaults.nativeAudioModeKey) {
+            sendNativeAudio(fileURL: url, ttsEnabled: UserDefaults.standard.bool(forKey: VivaUserDefaults.playTTSAudioKey))
+        } else {
+            Task {
+                await transcribeAudio(fileURL: url)
+            }
         }
     }
 
@@ -105,15 +109,7 @@ final class ContentViewModel: ObservableObject {
                 try Task.checkCancellation()
 
                 textInput = ""
-                agentResponse = response.text
-
-                if let ttsError = response.ttsError {
-                    print("TTS Error: \(ttsError)")
-                }
-
-                if let audioURL = response.audioURL, ttsEnabled {
-                    await responseAudioPlayer.play(from: audioURL)
-                }
+                await handleVivaResponse(response, ttsEnabled: ttsEnabled)
             } catch {
                 let wasCancelled = Task.isCancelled || (error as? URLError)?.code == .cancelled
                 agentResponse = wasCancelled ? "Request cancelled." : "Viva request failed: \(error.localizedDescription)"
@@ -138,6 +134,60 @@ final class ContentViewModel: ObservableObject {
 
     func stopResponseAudio() {
         responseAudioPlayer.stop()
+    }
+
+    private func sendNativeAudio(fileURL: URL, ttsEnabled: Bool) {
+        guard !isSendingToAI else { return }
+        let requestID = UUID().uuidString
+
+        aiRequestTask = Task {
+            isSendingToAI = true
+            activeVivaRequestID = requestID
+            textInput = ""
+            agentResponse = ""
+            responseAudioPlayer.stop()
+
+            defer {
+                if activeVivaRequestID == requestID {
+                    isSendingToAI = false
+                    activeVivaRequestID = nil
+                    aiRequestTask = nil
+                }
+            }
+
+            var screenshot: NSImage?
+            if shareScreen {
+                screenshot = try? await ScreenShotManager.captureMainDisplay()
+            }
+
+            do {
+                try Task.checkCancellation()
+                let response = try await apiClient.sendVivaNativeAudioRequest(
+                    fileURL: fileURL,
+                    image: screenshot,
+                    requestID: requestID,
+                    ttsEnabled: ttsEnabled
+                )
+                try Task.checkCancellation()
+
+                await handleVivaResponse(response, ttsEnabled: ttsEnabled)
+            } catch {
+                let wasCancelled = Task.isCancelled || (error as? URLError)?.code == .cancelled
+                agentResponse = wasCancelled ? "Request cancelled." : "Viva request failed: \(error.localizedDescription)"
+            }
+        }
+    }
+
+    private func handleVivaResponse(_ response: VivaResponse, ttsEnabled: Bool) async {
+        agentResponse = response.text
+
+        if let ttsError = response.ttsError {
+            print("TTS Error: \(ttsError)")
+        }
+
+        if let audioURL = response.audioURL, ttsEnabled {
+            await responseAudioPlayer.play(from: audioURL)
+        }
     }
 
     private func transcribeAudio(fileURL: URL) async {

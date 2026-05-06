@@ -2,6 +2,7 @@ import Foundation
 
 enum VivaUserDefaults {
     static let playTTSAudioKey = "playTTSAudio"
+    static let nativeAudioModeKey = "nativeAudioMode"
 }
 
 extension Notification.Name {
@@ -10,6 +11,9 @@ extension Notification.Name {
 
 enum AppPreferences {
     static func registerDefaults() {
-        UserDefaults.standard.register(defaults: [VivaUserDefaults.playTTSAudioKey: true])
+        UserDefaults.standard.register(defaults: [
+            VivaUserDefaults.playTTSAudioKey: true,
+            VivaUserDefaults.nativeAudioModeKey: false
+        ])
     }
 }

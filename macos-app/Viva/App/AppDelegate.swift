@@ -33,6 +33,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         }
     }
 
+    @objc private func toggleNativeAudioMode(_ sender: NSMenuItem) {
+        let isEnabled = !UserDefaults.standard.bool(forKey: VivaUserDefaults.nativeAudioModeKey)
+        UserDefaults.standard.set(isEnabled, forKey: VivaUserDefaults.nativeAudioModeKey)
+        sender.state = isEnabled ? .on : .off
+    }
+
     @objc private func openSettings() {
         NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -85,6 +91,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         ttsItem.target = self
         ttsItem.state = UserDefaults.standard.bool(forKey: VivaUserDefaults.playTTSAudioKey) ? .on : .off
         menu.addItem(ttsItem)
+
+        let nativeAudioItem = NSMenuItem(title: "Native Audio Mode", action: #selector(toggleNativeAudioMode(_:)), keyEquivalent: "")
+        nativeAudioItem.target = self
+        nativeAudioItem.state = UserDefaults.standard.bool(forKey: VivaUserDefaults.nativeAudioModeKey) ? .on : .off
+        menu.addItem(nativeAudioItem)
+
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ","))
         menu.addItem(NSMenuItem.separator())

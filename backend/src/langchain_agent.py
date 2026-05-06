@@ -22,6 +22,7 @@ OLLAMA_MODEL = os.getenv("VIVA_OLLAMA_MODEL", "gemma4:e4b")
 OLLAMA_BASE_URL = os.getenv("VIVA_OLLAMA_BASE_URL", "http://localhost:11434/v1/")
 OLLAMA_API_KEY = os.getenv("VIVA_OLLAMA_API_KEY", "ollama")
 DEFAULT_IMAGE_MIME_TYPE = "image/jpeg"
+DEFAULT_AUDIO_MIME_TYPE = "audio/wav"
 MAX_HISTORY_MESSAGES = 5
 
 SYSTEM_PROMPT = (
@@ -50,30 +51,58 @@ def _normalize_image_mime_type(content_type: str | None) -> str:
     return DEFAULT_IMAGE_MIME_TYPE
 
 
+def _normalize_audio_mime_type(content_type: str | None) -> str:
+    if not content_type:
+        return DEFAULT_AUDIO_MIME_TYPE
+
+    mime_type = content_type.split(";", 1)[0].strip().lower()
+    if mime_type.startswith("audio/"):
+        return mime_type
+
+    logger.warning(
+        "Received native audio with non-audio content type '%s'; using '%s'.",
+        content_type,
+        DEFAULT_AUDIO_MIME_TYPE,
+    )
+    return DEFAULT_AUDIO_MIME_TYPE
+
+
 def _build_user_message(
     text: str,
     screenshot_bytes: bytes | None = None,
     screenshot_content_type: str | None = None,
     screenshot_filename: str | None = None,
+    audio_bytes: bytes | None = None,
+    audio_content_type: str | None = None,
+    audio_filename: str | None = None,
 ) -> HumanMessage:
     prompt = text.strip()
-    if not screenshot_bytes:
+    if not screenshot_bytes and not audio_bytes:
         return HumanMessage(content=prompt)
 
-    image_block: dict[str, Any] = {
-        "type": "image",
-        "base64": base64.b64encode(screenshot_bytes).decode("ascii"),
-        "mime_type": _normalize_image_mime_type(screenshot_content_type),
-    }
-    if screenshot_filename:
-        image_block["extras"] = {"filename": screenshot_filename}
+    content_blocks: list[dict[str, Any]] = [{"type": "text", "text": prompt}]
 
-    return HumanMessage(
-        content_blocks=[
-            {"type": "text", "text": prompt},
-            image_block,
-        ]
-    )
+    if audio_bytes:
+        audio_block: dict[str, Any] = {
+            "type": "audio",
+            "base64": base64.b64encode(audio_bytes).decode("ascii"),
+            "mime_type": _normalize_audio_mime_type(audio_content_type),
+        }
+        if audio_filename:
+            audio_block["extras"] = {"filename": audio_filename}
+        content_blocks.append(audio_block)
+
+    if screenshot_bytes:
+        image_block: dict[str, Any] = {
+            "type": "image",
+            "base64": base64.b64encode(screenshot_bytes).decode("ascii"),
+            "mime_type": _normalize_image_mime_type(screenshot_content_type),
+        }
+        if screenshot_filename:
+            image_block["extras"] = {"filename": screenshot_filename}
+        content_blocks.append(image_block)
+
+    return HumanMessage(content_blocks=content_blocks)
 
 
 def _text_from_content_block(block: Any) -> str:
@@ -218,6 +247,9 @@ class VivaAgentService:
         screenshot_bytes: bytes | None = None,
         screenshot_content_type: str | None = None,
         screenshot_filename: str | None = None,
+        audio_bytes: bytes | None = None,
+        audio_content_type: str | None = None,
+        audio_filename: str | None = None,
     ) -> str:
         await self.initialize()
 
@@ -226,6 +258,9 @@ class VivaAgentService:
             screenshot_bytes=screenshot_bytes,
             screenshot_content_type=screenshot_content_type,
             screenshot_filename=screenshot_filename,
+            audio_bytes=audio_bytes,
+            audio_content_type=audio_content_type,
+            audio_filename=audio_filename,
         )
 
         config: RunnableConfig = {"configurable": {"thread_id": "1"}}
@@ -247,6 +282,9 @@ async def run_viva_agent(
     screenshot_bytes: bytes | None = None,
     screenshot_content_type: str | None = None,
     screenshot_filename: str | None = None,
+    audio_bytes: bytes | None = None,
+    audio_content_type: str | None = None,
+    audio_filename: str | None = None,
     service: VivaAgentService | None = None,
 ) -> str:
     viva_service = service or VivaAgentService()
@@ -255,6 +293,9 @@ async def run_viva_agent(
         screenshot_bytes=screenshot_bytes,
         screenshot_content_type=screenshot_content_type,
         screenshot_filename=screenshot_filename,
+        audio_bytes=audio_bytes,
+        audio_content_type=audio_content_type,
+        audio_filename=audio_filename,
     )
 
 

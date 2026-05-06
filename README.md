@@ -27,6 +27,8 @@ Speak naturally, and Viva listens, understands, and acts. It can answer question
 | Open System Settings panes | "Open Bluetooth settings." |
 | Show a macOS notification | "Notify me that the export is done." |
 | Speak text with the system voice | "Say this out loud: meeting starts in five minutes." |
+| Set and manage multiple timers | "Set a pasta timer for 12 minutes." |
+| Check, update, or cancel timers | "How much time is left on my pasta timer?" |
 | Send an iMessage/SMS through Messages | "Text John saying I'll be there in 10 minutes." |
 | Create an Apple Note | "Create a note with these meeting takeaways." |
 | List reminder lists | "What reminder lists do I have?" |
@@ -85,7 +87,7 @@ Viva is designed with privacy as a first-class principle:
 - **🎙️ Voice-First Interaction** — Tap the mic, speak naturally, and get spoken responses. Speech-to-text and text-to-speech run entirely on-device.
 - **🔒 100% Private** — All inference happens locally via Ollama and MLX. No data is sent to any external AI provider.
 - **🧠 Local LLM Agent** — Powered by a LangChain agent connected to your local Ollama instance, with in-process message history for follow-up requests. Default model is `gemma4:26b`, but any Ollama-compatible model works.
-- **🖥️ macOS Integration** — Control your Mac through modular AppleScript tools: inspect system state, open settings panes, show notifications, speak feedback, send iMessages/email, create Notes, manage Reminders and Calendar events, look up Contacts, organize Finder selections, control Music playback and playlists, empty Trash, and more.
+- **🖥️ macOS Integration** — Control your Mac through modular AppleScript tools: inspect system state, open settings panes, show notifications, speak feedback, set and manage backend timers with macOS notifications, send iMessages/email, create Notes, manage Reminders and Calendar events, look up Contacts, organize Finder selections, control Music playback and playlists, empty Trash, and more.
 - **🌐 Web Awareness** — Search the web, extract clean text from webpages, and get real-time weather data.
 - **📸 Screen Context** — Optionally share a screenshot with your request for visual context.
 - **🗣️ Multilingual TTS** — Text-to-speech in 10 languages (English, Chinese, Japanese, Korean, German, French, Russian, Portuguese, Spanish, Italian) using Qwen3 TTS on MLX.
@@ -235,6 +237,8 @@ VIVA_OLLAMA_MODEL=llama3.3:70b python viva_api_server.py
 
 - *"What's the weather like in Rome?"*
 - *"Set a reminder to call Mom at 5 PM"*
+- *"Set a 10-minute timer for pasta"*
+- *"Cancel the pasta timer"*
 - *"Add lunch with Sara to my calendar tomorrow at 1 PM"*
 - *"What's on my calendar this week?"*
 - *"Find a free slot for a 30-minute meeting tomorrow afternoon"*

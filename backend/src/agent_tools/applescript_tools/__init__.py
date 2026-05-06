@@ -91,6 +91,14 @@ from .system_state import (
     start_mac_screensaver,
     system_state_tools,
 )
+from .timers import (
+    cancel_all_timers,
+    cancel_timer,
+    list_timers,
+    set_timer,
+    timer_tools,
+    update_timer,
+)
 
 
 all_mac_tools = [
@@ -105,6 +113,7 @@ all_mac_tools = [
     *context_tools,
     *music_tools,
     *media_file_tools,
+    *timer_tools,
 ]
 
 
@@ -121,7 +130,10 @@ __all__ = [
     "reminder_tools",
     "system_tools",
     "system_state_tools",
+    "timer_tools",
     "add_tracks_to_music_playlist",
+    "cancel_all_timers",
+    "cancel_timer",
     "check_mac_calendar_conflicts",
     "compress_finder_selection",
     "complete_mac_reminder",
@@ -157,6 +169,7 @@ __all__ = [
     "list_mac_reminders",
     "list_mail_message_summaries",
     "list_music_playlists",
+    "list_timers",
     "lock_mac_screen",
     "open_path_in_finder",
     "open_system_settings_pane",
@@ -172,6 +185,7 @@ __all__ = [
     "set_clipboard_content",
     "set_mac_dark_mode",
     "set_mac_volume",
+    "set_timer",
     "set_music_playback_options",
     "show_mac_calendar_event",
     "show_mac_notification",
@@ -181,4 +195,5 @@ __all__ = [
     "toggle_mac_mute",
     "update_mac_calendar_event",
     "update_mac_reminder",
+    "update_timer",
 ]

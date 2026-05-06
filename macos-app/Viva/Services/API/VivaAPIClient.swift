@@ -37,6 +37,25 @@ struct VivaAPIClient {
         return try JSONDecoder().decode(VivaResponse.self, from: data)
     }
 
+    func sendVivaNativeAudioRequest(fileURL: URL, image: NSImage?, requestID: String, ttsEnabled: Bool) async throws -> VivaResponse {
+        let audioData = try Data(contentsOf: fileURL)
+        var builder = MultipartFormDataBuilder()
+        builder.appendField(name: "request_id", value: requestID)
+        builder.appendField(name: "tts_enabled", value: "\(ttsEnabled)")
+        builder.appendFile(name: "file", filename: "input.wav", contentType: "audio/wav", data: audioData)
+
+        if let imageData = image?.jpegData {
+            builder.appendFile(name: "screenshot", filename: "screen.jpg", contentType: "image/jpeg", data: imageData)
+        }
+
+        var request = multipartRequest(path: "/viva/native-audio", boundary: builder.boundary)
+        request.timeoutInterval = requestTimeout
+        request.httpBody = builder.build()
+
+        let data = try await perform(request)
+        return try JSONDecoder().decode(VivaResponse.self, from: data)
+    }
+
     func cancelVivaRequest(requestID: String) async throws {
         var request = URLRequest(url: baseURL.appending(path: "/viva/cancel/\(requestID)"))
         request.httpMethod = "POST"

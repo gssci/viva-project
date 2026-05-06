@@ -25,6 +25,7 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 MODEL_REPO = "mlx-community/whisper-large-v3-mlx"
+NATIVE_AUDIO_PROMPT = "Respond to the user request."
 TTS_OUTPUT_DIR = Path(os.getenv("VIVA_TTS_OUTPUT_DIR", str(DEFAULT_OUTPUT_DIR)))
 TTS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -90,14 +91,14 @@ async def _clear_active_viva_task(
             del request.app.state.active_viva_tasks[request_id]
 
 
-@app.post("/viva")
-async def viva(
+async def _run_viva_request(
     request: Request,
-    text: str = Form(...),
-    request_id: str | None = Form(default=None),
-    tts_enabled: bool = Form(default=True),
-    screenshot: UploadFile | None = File(default=None),
-):
+    text: str,
+    request_id: str | None,
+    tts_enabled: bool,
+    screenshot: UploadFile | None = None,
+    audio: UploadFile | None = None,
+) -> dict[str, object]:
     clean_text = text.strip()
     if not clean_text:
         raise HTTPException(status_code=400, detail="The 'text' field is required.")
@@ -120,11 +121,19 @@ async def viva(
     if screenshot is not None:
         screenshot_bytes = await screenshot.read()
 
+    audio_bytes: bytes | None = None
+    if audio is not None:
+        audio_bytes = await audio.read()
+        if not audio_bytes:
+            await _clear_active_viva_task(request, viva_request_id, current_task)
+            raise HTTPException(status_code=400, detail="The audio file is empty.")
+
     logger.info(
-        "Received Viva request. request_id=%s text_length=%s screenshot=%s",
+        "Received Viva request. request_id=%s text_length=%s screenshot=%s native_audio=%s",
         viva_request_id,
         len(clean_text),
         bool(screenshot_bytes),
+        bool(audio_bytes),
     )
 
     start_time = time.time()
@@ -134,6 +143,9 @@ async def viva(
             screenshot_bytes=screenshot_bytes,
             screenshot_content_type=screenshot.content_type if screenshot else None,
             screenshot_filename=screenshot.filename if screenshot else None,
+            audio_bytes=audio_bytes,
+            audio_content_type=audio.content_type if audio else None,
+            audio_filename=audio.filename if audio else None,
         )
         if current_task is not None and current_task.cancelling():
             raise asyncio.CancelledError
@@ -199,6 +211,42 @@ async def viva(
         "used_screenshot": bool(screenshot_bytes),
         **audio_payload,
     }
+
+
+@app.post("/viva")
+async def viva(
+    request: Request,
+    text: str = Form(...),
+    request_id: str | None = Form(default=None),
+    tts_enabled: bool = Form(default=True),
+    screenshot: UploadFile | None = File(default=None),
+):
+    return await _run_viva_request(
+        request=request,
+        text=text,
+        request_id=request_id,
+        tts_enabled=tts_enabled,
+        screenshot=screenshot,
+    )
+
+
+@app.post("/viva/native-audio")
+async def viva_native_audio(
+    request: Request,
+    file: UploadFile = File(...),
+    text: str = Form(default=NATIVE_AUDIO_PROMPT),
+    request_id: str | None = Form(default=None),
+    tts_enabled: bool = Form(default=True),
+    screenshot: UploadFile | None = File(default=None),
+):
+    return await _run_viva_request(
+        request=request,
+        text=text,
+        request_id=request_id,
+        tts_enabled=tts_enabled,
+        screenshot=screenshot,
+        audio=file,
+    )
 
 
 @app.post("/viva/cancel/{request_id}")
