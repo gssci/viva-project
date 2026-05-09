@@ -75,7 +75,7 @@ Speak naturally, and Viva listens, understands, and acts. It can answer question
 
 Viva is designed with privacy as a first-class principle:
 
-- **All AI inference runs locally** — Whisper, your chosen LLM via Ollama, and Qwen TTS all execute on your Mac's Apple Silicon chip.
+- **All AI inference runs locally** — Whisper, your chosen LLM via Ollama, and Kokoro or Voxtral TTS all execute on your Mac's Apple Silicon chip.
 - **No cloud AI APIs** — no OpenAI, Google, or Anthropic endpoints are called.
 - **Web search and weather** use LangChain's DuckDuckGo integration and Open-Meteo (a free, privacy-respecting weather API that doesn't require authentication or tracking).
 - **Audio recordings** are temporary and deleted immediately after transcription.
@@ -90,7 +90,7 @@ Viva is designed with privacy as a first-class principle:
 - **🖥️ macOS Integration** — Control your Mac through modular AppleScript tools: inspect system state, open settings panes, show notifications, speak feedback, set and manage backend timers with macOS notifications, send iMessages/email, create Notes, manage Reminders and Calendar events, look up Contacts, organize Finder selections, control Music playback and playlists, empty Trash, and more.
 - **🌐 Web Awareness** — Search the web, extract clean text from webpages, and get real-time weather data.
 - **📸 Screen Context** — Optionally share a screenshot with your request for visual context.
-- **🗣️ Multilingual TTS** — Text-to-speech in 10 languages (English, Chinese, Japanese, Korean, German, French, Russian, Portuguese, Spanish, Italian) using Qwen3 TTS on MLX.
+- **🗣️ Streaming TTS** — Text-to-speech streams from the backend to the macOS app using Kokoro or Voxtral 4B on MLX Audio.
 - **🎤 Whisper Transcription** — MLX-powered Whisper Large V3 for fast, accurate on-device speech recognition with automatic language detection.
 
 ---
@@ -110,7 +110,7 @@ Viva is designed with privacy as a first-class principle:
 ┌─────────────────────────────────────────────────┐
 │           Backend (FastAPI on localhost:8000)    │
 │  ┌────────────┐  ┌────────────┐  ┌───────────┐  │
-│  │ MLX Whisper│  │ LangChain  │  │ Qwen TTS  │  │
+│  │ MLX Whisper│  │ LangChain  │  │ MLX TTS   │  │
 │  │ (STT)      │  │ Agent +    │  │ (MLX)     │  │
 │  │            │  │ Ollama LLM │  │           │  │
 │  └────────────┘  └────────────┘  └───────────┘  │
@@ -134,7 +134,7 @@ Viva is designed with privacy as a first-class principle:
 | **Backend Server** | FastAPI + Uvicorn | REST API coordinating STT, agent, and TTS |
 | **Speech-to-Text** | MLX Whisper (Large V3) | On-device audio transcription via Apple Silicon Neural Engine |
 | **AI Agent** | LangChain + Ollama | Conversational agent with tool-calling capabilities and in-process message history |
-| **Text-to-Speech** | Qwen TTS (MLX Audio) | On-device voice synthesis in 10 languages |
+| **Text-to-Speech** | Kokoro or Voxtral 4B (MLX Audio) | On-device streaming voice synthesis |
 | **macOS Tools** | AppleScript (`osascript`) | System state, settings, notifications, speech, iMessage, Mail, Contacts, Notes, Reminders, Calendar, clipboard, Safari, Finder, Music, Trash |
 
 ---
@@ -211,11 +211,12 @@ All configuration is done via environment variables. Set them in your shell or a
 | `VIVA_OLLAMA_MODEL` | `gemma4:26b` | Ollama model to use for the agent |
 | `VIVA_OLLAMA_BASE_URL` | `http://localhost:11434/v1/` | Ollama API endpoint |
 | `VIVA_OLLAMA_API_KEY` | `ollama` | API key for Ollama (usually not needed) |
-| `VIVA_QWEN_TTS_MODEL` | `mlx-community/Qwen3-TTS-12Hz-0.6B-CustomVoice-6bit` | MLX Qwen TTS model used for speech synthesis |
-| `VIVA_QWEN_TTS_SPEAKER` | `Vivian` | Default Qwen TTS speaker voice |
-| `VIVA_QWEN_TTS_INSTRUCT` | neutral delivery prompt | Voice style instruction passed to Qwen TTS |
+| `VIVA_TTS_ENGINE` | `voxtral` | TTS engine. Supported values: `kokoro`, `voxtral` |
+| `VIVA_TTS_MODEL` | `prince-canuma/Kokoro-82M` | Kokoro model used for speech synthesis |
+| `VIVA_VOXTRAL_TTS_MODEL` | `mlx-community/Voxtral-4B-TTS-2603-mlx-4bit` | Voxtral 4B model used when `VIVA_TTS_ENGINE=voxtral` |
+| `VIVA_TTS_VOICE_GENDER` | `female` | Default Voxtral voice gender for non-app callers. The macOS menu can choose male or female per request |
 | `VIVA_TTS_OUTPUT_DIR` | system temp `viva_tts_audio` directory | Directory for generated TTS audio files |
-| `VIVA_TTS_WARMUP` | `0` | Set to `1` to pre-load the TTS model at startup |
+| `VIVA_TTS_WARMUP` | `1` | Set to `0` to skip pre-loading the TTS model at startup |
 
 Example with a custom model:
 
@@ -269,8 +270,10 @@ viva-project/
 │   ├── langchain_agent.py         # LangChain agent service and multimodal message handling
 │   ├── pyproject.toml             # Python dependencies
 │   ├── tools/
-│   │   ├── qwen_tts_tools.py      # Qwen TTS synthesis on MLX
-│   │   └── tts_tools.py           # Legacy TTS utilities
+│   │   ├── tts_common.py          # Shared TTS data/audio helpers
+│   │   ├── tts_factory.py         # Kokoro/Voxtral service selection
+│   │   ├── tts_tools.py           # Kokoro TTS synthesis on MLX Audio
+│   │   └── voxtral_tts_tools.py   # Voxtral 4B TTS synthesis on MLX Audio
 │   ├── agent_tools/
 │   │   ├── general_tools.py       # Date/time, web, weather, and Python tools
 │   │   └── applescript_tools/     # Modular macOS AppleScript tools

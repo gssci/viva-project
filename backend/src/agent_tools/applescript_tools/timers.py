@@ -325,9 +325,8 @@ def update_timer(
         if not matches:
             return "No active timer matched that reference."
         if len(matches) > 1:
-            return (
-                "Multiple active timers matched. Provide a timer id.\n"
-                + "\n".join(_timer_summary(timer) for timer in matches)
+            return "Multiple active timers matched. Provide a timer id.\n" + "\n".join(
+                _timer_summary(timer) for timer in matches
             )
 
         timer = matches[0]

@@ -19,10 +19,11 @@ struct VivaAPIClient {
         return response.text.trimmingCharacters(in: .whitespacesAndNewlines)
     }
 
-    func sendVivaRequest(text: String, image: NSImage?, requestID: String, ttsEnabled: Bool) async throws -> VivaResponse {
+    func sendVivaRequest(text: String, image: NSImage?, requestID: String, ttsEnabled: Bool, ttsVoiceGender: VivaTTSVoiceGender) async throws -> VivaResponse {
         var builder = MultipartFormDataBuilder()
         builder.appendField(name: "request_id", value: requestID)
         builder.appendField(name: "tts_enabled", value: "\(ttsEnabled)")
+        builder.appendField(name: "tts_voice_gender", value: ttsVoiceGender.rawValue)
         builder.appendField(name: "text", value: text)
 
         if let imageData = image?.jpegData {
@@ -37,11 +38,12 @@ struct VivaAPIClient {
         return try JSONDecoder().decode(VivaResponse.self, from: data)
     }
 
-    func sendVivaNativeAudioRequest(fileURL: URL, image: NSImage?, requestID: String, ttsEnabled: Bool) async throws -> VivaResponse {
+    func sendVivaNativeAudioRequest(fileURL: URL, image: NSImage?, requestID: String, ttsEnabled: Bool, ttsVoiceGender: VivaTTSVoiceGender) async throws -> VivaResponse {
         let audioData = try Data(contentsOf: fileURL)
         var builder = MultipartFormDataBuilder()
         builder.appendField(name: "request_id", value: requestID)
         builder.appendField(name: "tts_enabled", value: "\(ttsEnabled)")
+        builder.appendField(name: "tts_voice_gender", value: ttsVoiceGender.rawValue)
         builder.appendFile(name: "file", filename: "input.wav", contentType: "audio/wav", data: audioData)
 
         if let imageData = image?.jpegData {

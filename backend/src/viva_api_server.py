@@ -4,17 +4,22 @@ import os
 import tempfile
 import time
 import uuid
+from concurrent.futures import ThreadPoolExecutor
 from contextlib import asynccontextmanager
+from dataclasses import dataclass
 from pathlib import Path
+from typing import Iterator
 
 import mlx_whisper
 import numpy as np
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, Request, UploadFile
+from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from langchain_agent import VivaAgentService
-from tools.tts_tools import DEFAULT_OUTPUT_DIR, VivaTTSService
+from tools.tts_common import PCM_STREAM_CONTENT_TYPE
+from tools.tts_factory import DEFAULT_OUTPUT_DIR, create_tts_service
 
 # --- 1. Setup Logging ---
 logging.basicConfig(
@@ -28,6 +33,17 @@ MODEL_REPO = "mlx-community/whisper-large-v3-mlx"
 NATIVE_AUDIO_PROMPT = "Respond to the user request."
 TTS_OUTPUT_DIR = Path(os.getenv("VIVA_TTS_OUTPUT_DIR", str(DEFAULT_OUTPUT_DIR)))
 TTS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+TTS_STREAM_MAX_AGE_SECONDS = 5 * 60
+DEFAULT_TTS_VOICE_GENDER = os.getenv("VIVA_TTS_VOICE_GENDER", "female")
+SUPPORTED_TTS_VOICE_GENDERS = {"male", "female"}
+_END_OF_STREAM = object()
+
+
+@dataclass(frozen=True)
+class PendingTTSStream:
+    text: str
+    voice_gender: str | None
+    created_at: float
 
 
 def _warm_up_whisper_model() -> None:
@@ -43,6 +59,24 @@ def _transcribe_audio_file(temp_audio_path: str) -> dict:
     )
 
 
+def _normalize_tts_voice_gender(voice_gender: str | None) -> str:
+    normalized = (voice_gender or DEFAULT_TTS_VOICE_GENDER).strip().lower()
+    if normalized not in SUPPORTED_TTS_VOICE_GENDERS:
+        supported = ", ".join(sorted(SUPPORTED_TTS_VOICE_GENDERS))
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unsupported TTS voice gender '{voice_gender}'. Use one of: {supported}.",
+        )
+    return normalized
+
+
+def _next_tts_chunk(chunk_iterator: Iterator):
+    try:
+        return next(chunk_iterator)
+    except StopIteration:
+        return _END_OF_STREAM
+
+
 # --- 2. Startup Event (Model Pre-loading) ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -55,13 +89,20 @@ async def lifespan(app: FastAPI):
     await asyncio.to_thread(_warm_up_whisper_model)
     app.state.viva_service = VivaAgentService()
     await app.state.viva_service.initialize()
-    app.state.tts_service = VivaTTSService(output_dir=TTS_OUTPUT_DIR)
+    app.state.tts_service = create_tts_service(output_dir=TTS_OUTPUT_DIR)
+    app.state.tts_executor = ThreadPoolExecutor(
+        max_workers=1,
+        thread_name_prefix="viva-tts",
+    )
     app.state.active_viva_tasks = {}
     app.state.active_viva_task_lock = asyncio.Lock()
+    app.state.pending_tts_streams = {}
+    app.state.pending_tts_stream_lock = asyncio.Lock()
 
-    if os.getenv("VIVA_TTS_WARMUP", "0") == "1":
+    if os.getenv("VIVA_TTS_WARMUP", "1") == "1":
         logger.info("Pre-loading TTS model into memory...")
-        await asyncio.to_thread(app.state.tts_service.warm_up)
+        loop = asyncio.get_running_loop()
+        await loop.run_in_executor(app.state.tts_executor, app.state.tts_service.warm_up)
 
     logger.info(
         f"Model successfully loaded and cached in {time.time() - start_time:.2f} seconds."
@@ -70,6 +111,7 @@ async def lifespan(app: FastAPI):
     yield
 
     logger.info("Server shutting down.")
+    app.state.tts_executor.shutdown(wait=False, cancel_futures=True)
 
 
 # Initialize FastAPI with the lifespan context
@@ -91,11 +133,50 @@ async def _clear_active_viva_task(
             del request.app.state.active_viva_tasks[request_id]
 
 
+def _absolute_url(request: Request, path: str) -> str:
+    return str(request.base_url).rstrip("/") + path
+
+
+async def _store_tts_stream(
+    request: Request,
+    request_id: str,
+    text: str,
+    voice_gender: str | None,
+) -> None:
+    now = time.time()
+    async with request.app.state.pending_tts_stream_lock:
+        stale_request_ids = [
+            stream_request_id
+            for stream_request_id, pending in request.app.state.pending_tts_streams.items()
+            if now - pending.created_at > TTS_STREAM_MAX_AGE_SECONDS
+        ]
+        for stream_request_id in stale_request_ids:
+            del request.app.state.pending_tts_streams[stream_request_id]
+
+        request.app.state.pending_tts_streams[request_id] = PendingTTSStream(
+            text=text,
+            voice_gender=voice_gender,
+            created_at=now,
+        )
+
+
+async def _pop_tts_stream(request: Request, request_id: str) -> PendingTTSStream | None:
+    async with request.app.state.pending_tts_stream_lock:
+        pending = request.app.state.pending_tts_streams.pop(request_id, None)
+
+    if pending is None:
+        return None
+    if time.time() - pending.created_at > TTS_STREAM_MAX_AGE_SECONDS:
+        return None
+    return pending
+
+
 async def _run_viva_request(
     request: Request,
     text: str,
     request_id: str | None,
     tts_enabled: bool,
+    tts_voice_gender: str | None,
     screenshot: UploadFile | None = None,
     audio: UploadFile | None = None,
 ) -> dict[str, object]:
@@ -108,6 +189,7 @@ async def _run_viva_request(
         raise HTTPException(
             status_code=400, detail="The 'request_id' field cannot be empty."
         )
+    clean_tts_voice_gender = _normalize_tts_voice_gender(tts_voice_gender)
 
     current_task = asyncio.current_task()
     async with request.app.state.active_viva_task_lock:
@@ -174,22 +256,29 @@ async def _run_viva_request(
 
     try:
         if tts_enabled:
-            tts_result = await asyncio.to_thread(
-                request.app.state.tts_service.synthesize_to_file,
+            tts_metadata = await asyncio.to_thread(
+                request.app.state.tts_service.describe,
                 response_text,
+                clean_tts_voice_gender,
             )
             if current_task is not None and current_task.cancelling():
                 raise asyncio.CancelledError
+
+            await _store_tts_stream(
+                request,
+                viva_request_id,
+                response_text,
+                clean_tts_voice_gender,
+            )
             audio_payload.update(
                 {
-                    "audio_url": (
-                        str(request.base_url).rstrip("/")
-                        + f"/generated-audio/{tts_result.path.name}"
+                    "audio_url": _absolute_url(
+                        request,
+                        f"/viva/tts-stream/{viva_request_id}",
                     ),
-                    "audio_content_type": "audio/wav",
-                    "tts_language": tts_result.language,
-                    "tts_voice": tts_result.voice,
-                    "tts_processing_time": tts_result.processing_time,
+                    "audio_content_type": PCM_STREAM_CONTENT_TYPE,
+                    "tts_language": tts_metadata.language,
+                    "tts_voice": tts_metadata.voice,
                 }
             )
         else:
@@ -219,6 +308,7 @@ async def viva(
     text: str = Form(...),
     request_id: str | None = Form(default=None),
     tts_enabled: bool = Form(default=True),
+    tts_voice_gender: str | None = Form(default=DEFAULT_TTS_VOICE_GENDER),
     screenshot: UploadFile | None = File(default=None),
 ):
     return await _run_viva_request(
@@ -226,6 +316,7 @@ async def viva(
         text=text,
         request_id=request_id,
         tts_enabled=tts_enabled,
+        tts_voice_gender=tts_voice_gender,
         screenshot=screenshot,
     )
 
@@ -237,6 +328,7 @@ async def viva_native_audio(
     text: str = Form(default=NATIVE_AUDIO_PROMPT),
     request_id: str | None = Form(default=None),
     tts_enabled: bool = Form(default=True),
+    tts_voice_gender: str | None = Form(default=DEFAULT_TTS_VOICE_GENDER),
     screenshot: UploadFile | None = File(default=None),
 ):
     return await _run_viva_request(
@@ -244,8 +336,58 @@ async def viva_native_audio(
         text=text,
         request_id=request_id,
         tts_enabled=tts_enabled,
+        tts_voice_gender=tts_voice_gender,
         screenshot=screenshot,
         audio=file,
+    )
+
+
+@app.get("/viva/tts-stream/{request_id}")
+async def viva_tts_stream(request: Request, request_id: str):
+    pending = await _pop_tts_stream(request, request_id)
+    if pending is None:
+        raise HTTPException(status_code=404, detail="No pending TTS stream found.")
+
+    tts_service = request.app.state.tts_service
+
+    async def audio_iterator():
+        chunk_iterator = tts_service.stream_pcm(
+            pending.text,
+            pending.voice_gender,
+        )
+        loop = asyncio.get_running_loop()
+        try:
+            while True:
+                chunk = await loop.run_in_executor(
+                    request.app.state.tts_executor,
+                    _next_tts_chunk,
+                    chunk_iterator,
+                )
+                if chunk is _END_OF_STREAM:
+                    break
+                if chunk.data:
+                    yield chunk.data
+        except asyncio.CancelledError:
+            logger.info("TTS stream closed by client. request_id=%s", request_id)
+            raise
+        except Exception as exc:
+            logger.exception("TTS stream failed. request_id=%s error=%s", request_id, exc)
+        finally:
+            await loop.run_in_executor(
+                request.app.state.tts_executor,
+                chunk_iterator.close,
+            )
+
+    headers = {
+        "Cache-Control": "no-store",
+        "X-Audio-Sample-Rate": str(tts_service.sample_rate),
+        "X-Audio-Channels": "1",
+        "X-Audio-Sample-Format": "f32le",
+    }
+    return StreamingResponse(
+        audio_iterator(),
+        media_type=PCM_STREAM_CONTENT_TYPE,
+        headers=headers,
     )
 
 

@@ -15,6 +15,7 @@ dependencies = [
     "langchain-openai>=1.0.0",
     "langdetect>=1.0.9",
     "misaki[en]>=0.9.4",
+    "mistral-common[audio]>=1.11.2",
     "mlx-audio>=0.4.2",
     "mlx-whisper>=0.4.2",
     "python-multipart>=0.0.20",

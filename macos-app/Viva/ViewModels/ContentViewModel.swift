@@ -20,6 +20,10 @@ final class ContentViewModel: ObservableObject {
     private var aiRequestTask: Task<Void, Never>?
     private var activeVivaRequestID: String?
     private var cancellables = Set<AnyCancellable>()
+    private var selectedTTSVoiceGender: VivaTTSVoiceGender {
+        let rawValue = UserDefaults.standard.string(forKey: VivaUserDefaults.ttsVoiceGenderKey)
+        return VivaTTSVoiceGender(rawValue: rawValue ?? "") ?? .female
+    }
 
     convenience init() {
         self.init(
@@ -104,7 +108,8 @@ final class ContentViewModel: ObservableObject {
                     text: currentText,
                     image: screenshot,
                     requestID: requestID,
-                    ttsEnabled: ttsEnabled
+                    ttsEnabled: ttsEnabled,
+                    ttsVoiceGender: selectedTTSVoiceGender
                 )
                 try Task.checkCancellation()
 
@@ -166,7 +171,8 @@ final class ContentViewModel: ObservableObject {
                     fileURL: fileURL,
                     image: screenshot,
                     requestID: requestID,
-                    ttsEnabled: ttsEnabled
+                    ttsEnabled: ttsEnabled,
+                    ttsVoiceGender: selectedTTSVoiceGender
                 )
                 try Task.checkCancellation()
 

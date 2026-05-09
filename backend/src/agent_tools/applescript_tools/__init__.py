@@ -185,6 +185,7 @@ __all__ = [
     "set_clipboard_content",
     "set_mac_dark_mode",
     "set_mac_volume",
+    "set_siri_language_and_voice",
     "set_timer",
     "set_music_playback_options",
     "show_mac_calendar_event",

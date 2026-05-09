@@ -39,6 +39,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         sender.state = isEnabled ? .on : .off
     }
 
+    @objc private func selectTTSVoiceGender(_ sender: NSMenuItem) {
+        guard let voiceGender = sender.representedObject as? String else { return }
+        UserDefaults.standard.set(voiceGender, forKey: VivaUserDefaults.ttsVoiceGenderKey)
+    }
+
+    @objc private func selectTTSSpeechRate(_ sender: NSMenuItem) {
+        guard let speechRate = sender.representedObject as? String else { return }
+        UserDefaults.standard.set(speechRate, forKey: VivaUserDefaults.ttsSpeechRateKey)
+        NotificationCenter.default.post(name: .vivaTTSSpeechRateChanged, object: nil)
+    }
+
     @objc private func openSettings() {
         NSApp.sendAction(Selector(("showSettingsWindow:")), to: nil, from: nil)
         NSApp.activate(ignoringOtherApps: true)
@@ -97,6 +108,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         nativeAudioItem.state = UserDefaults.standard.bool(forKey: VivaUserDefaults.nativeAudioModeKey) ? .on : .off
         menu.addItem(nativeAudioItem)
 
+        menu.addItem(ttsVoiceGenderMenuItem())
+        menu.addItem(ttsSpeechRateMenuItem())
         menu.addItem(NSMenuItem.separator())
         menu.addItem(NSMenuItem(title: "Settings...", action: #selector(openSettings), keyEquivalent: ","))
         menu.addItem(NSMenuItem.separator())
@@ -105,6 +118,48 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
         statusItem.menu = menu
         statusItem.button?.performClick(nil)
         statusItem.menu = nil
+    }
+
+    private func ttsVoiceGenderMenuItem() -> NSMenuItem {
+        let item = NSMenuItem(title: "TTS Voice", action: nil, keyEquivalent: "")
+        let submenu = NSMenu()
+        let selectedVoiceGender = UserDefaults.standard.string(forKey: VivaUserDefaults.ttsVoiceGenderKey) ?? VivaTTSVoiceGender.female.rawValue
+
+        for voiceGender in VivaTTSVoiceGender.allCases {
+            let voiceItem = NSMenuItem(
+                title: voiceGender.menuTitle,
+                action: #selector(selectTTSVoiceGender(_:)),
+                keyEquivalent: ""
+            )
+            voiceItem.target = self
+            voiceItem.representedObject = voiceGender.rawValue
+            voiceItem.state = selectedVoiceGender == voiceGender.rawValue ? .on : .off
+            submenu.addItem(voiceItem)
+        }
+
+        item.submenu = submenu
+        return item
+    }
+
+    private func ttsSpeechRateMenuItem() -> NSMenuItem {
+        let item = NSMenuItem(title: "Speech Rate", action: nil, keyEquivalent: "")
+        let submenu = NSMenu()
+        let selectedSpeechRate = VivaTTSSpeechRate.selected.rawValue
+
+        for speechRate in VivaTTSSpeechRate.allCases {
+            let rateItem = NSMenuItem(
+                title: speechRate.menuTitle,
+                action: #selector(selectTTSSpeechRate(_:)),
+                keyEquivalent: ""
+            )
+            rateItem.target = self
+            rateItem.representedObject = speechRate.rawValue
+            rateItem.state = selectedSpeechRate == speechRate.rawValue ? .on : .off
+            submenu.addItem(rateItem)
+        }
+
+        item.submenu = submenu
+        return item
     }
 
     private func showPanel() {
