@@ -87,7 +87,7 @@ VOXTRAL_LANGUAGE_HINT_PATTERNS = (
 )
 
 VOXTRAL_VOICE_BY_LANGUAGE_AND_GENDER = {
-    "en": {"male": "casual_male", "female": "casual_female"},
+    "en": {"male": "neutral_male", "female": "neutral_female"},
     "fr": {"male": "fr_male", "female": "fr_female"},
     "es": {"male": "es_male", "female": "es_female"},
     "de": {"male": "de_male", "female": "de_female"},
@@ -191,12 +191,12 @@ class VivaVoxtralTTSService:
         )
         self.audio_format = audio_format
         self.max_age_seconds = max_age_seconds
-        self.temperature = _env_float("VIVA_VOXTRAL_TTS_TEMPERATURE", 0.8)
+        self.temperature = _env_float("VIVA_VOXTRAL_TTS_TEMPERATURE", 0.3)
         self.top_k = _env_int("VIVA_VOXTRAL_TTS_TOP_K", 50)
         self.top_p = _env_float("VIVA_VOXTRAL_TTS_TOP_P", 0.95)
         self.max_tokens = _env_int("VIVA_VOXTRAL_TTS_MAX_TOKENS", 4096)
         self.streaming_interval = _env_float(
-            "VIVA_VOXTRAL_TTS_STREAMING_INTERVAL", 0.8
+            "VIVA_VOXTRAL_TTS_STREAMING_INTERVAL", 0.15
         )
         self._model = None
         self._lock = threading.Lock()

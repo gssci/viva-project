@@ -1,277 +1,118 @@
-# Viva — Your Private, On-Device AI Assistant for macOS
+# Viva — Private On-Device AI Assistant for macOS
 
-**Viva** is a macOS menubar AI assistant that leverages open-source AI models to provide a completely private, local Siri alternative. Everything runs on your MacBook Pro — no cloud services, no data leaves your machine.
+A macOS menubar AI assistant that runs entirely on-device. No cloud APIs, no data leaves your Mac.
 
-Speak naturally, and Viva listens, understands, and acts. It can answer questions, search the web, control your Mac, send messages, manage reminders and calendar events, and much more — all powered by locally-running open-source models on Apple Silicon.
+## Overview
 
----
+Viva provides a voice-first, private alternative to Siri on Apple Silicon Macs. Powered by open-source models running locally via MLX and Ollama, it handles voice input, natural language understanding, and spoken responses — all with zero external dependencies.
 
-## 🔒 Privacy
+**Key capabilities:**
+- Voice transcription via MLX Whisper Large v3 (auto language detection)
+- LLM agent via Ollama with in-process conversation history
+- Streaming text-to-speech (Kokoro or Voxtral 4B via MLX Audio)
+- 50+ macOS automation tools: system controls, Calendar, Reminders, Messages, Mail, Finder, Music, Safari, clipboard, and more
+- Web search (DuckDuckGo), weather (Open-Meteo), and webpage extraction
+- Optional screenshot context for visual queries
+- Dual-mode: text input or native audio (send raw audio directly to multimodal LLM)
 
-Viva is designed with privacy as a first-class principle:
-
-- **All AI inference runs locally** — Whisper, your chosen LLM via Ollama, and Kokoro or Voxtral TTS all execute on your Mac's Apple Silicon chip.
-- **No cloud AI APIs** — no OpenAI, Google, or Anthropic endpoints are called.
-- **Web search and weather** use LangChain's DuckDuckGo integration and Open-Meteo (a free, privacy-respecting weather API that doesn't require authentication or tracking).
-- **Audio recordings** are temporary and deleted immediately after transcription.
-
----
-
-## ✨ Features
-
-- **🎙️ Voice-First Interaction** — Tap the mic, speak naturally, and get spoken responses. Speech-to-text and text-to-speech run entirely on-device.
-- **🔒 100% Private** — All inference happens locally via Ollama and MLX. No data is sent to any external AI provider.
-- **🧠 Local LLM Agent** — Powered by a LangChain agent connected to your local Ollama instance, with in-process message history for follow-up requests. Default model is `gemma4:26b`, but any Ollama-compatible model works.
-- **🖥️ macOS Integration** — Control your Mac through modular AppleScript tools: inspect system state, open settings panes, show notifications, speak feedback, set and manage backend timers with macOS notifications, send iMessages/email, create Notes, manage Reminders and Calendar events, look up Contacts, organize Finder selections, control Music playback and playlists, empty Trash, and more.
-- **🌐 Web Awareness** — Search the web, extract clean text from webpages, and get real-time weather data.
-- **📸 Screen Context** — Optionally share a screenshot with your request for visual context.
-- **🗣️ Streaming TTS** — Text-to-speech streams from the backend to the macOS app using Kokoro or Voxtral 4B on MLX Audio.
-- **🎤 Whisper Transcription** — MLX-powered Whisper Large V3 for fast, accurate on-device speech recognition with automatic language detection.
-
----
-
-## 🏗️ Architecture
+## Architecture
 
 ```
-┌─────────────────────────────────────────────────┐
-│                  macOS App (SwiftUI)             │
-│  ┌──────────┐  ┌──────────┐  ┌───────────────┐  │
-│  │ Menubar   │  │ Floating  │  │  Audio        │  │
-│  │ Icon      │→ │ Panel UI  │  │  Recorder     │  │
-│  └──────────┘  └────┬─────┘  └───────────────┘  │
-│                     │ HTTP                       │
-└─────────────────────┼───────────────────────────┘
-                      ▼
-┌─────────────────────────────────────────────────┐
-│           Backend (FastAPI on localhost:8000)    │
-│  ┌────────────┐  ┌────────────┐  ┌───────────┐  │
-│  │ MLX Whisper│  │ LangChain  │  │ MLX TTS   │  │
-│  │ (STT)      │  │ Agent +    │  │ (MLX)     │  │
-│  │            │  │ Ollama LLM │  │           │  │
-│  └────────────┘  └────────────┘  └───────────┘  │
-│                        │                         │
-│              ┌─────────┴─────────┐               │
-│              │   Tool Belt       │               │
-│              │ • Web Search      │               │
-│              │ • Weather API     │               │
-│              │ • Page Extraction │               │
-│              │ • AppleScript     │               │
-│              │   (macOS control) │               │
-│              └───────────────────┘               │
-└─────────────────────────────────────────────────┘
+┌─────────────────────────────────────┐
+│         macOS App (SwiftUI)         │
+│  Menubar icon  │  Floating panel   │
+│  Audio recorder│  Screenshot       │
+│  TTS player    │  API client       │
+└────────┬────────────────────────────┘
+         │  HTTP  (localhost:8001)
+         ▼
+┌─────────────────────────────────────┐
+│         Backend (FastAPI)           │
+│  Whisper STT  │  Ollama LLM Agent  │
+│  Kokoro/Vox TTS│  50+ macOS tools  │
+└─────────────────────────────────────┘
 ```
 
-### Components
+## Tech Stack
 
-| Component | Technology | Purpose |
-|---|---|---|
-| **macOS App** | SwiftUI + SwiftData | Menubar icon, floating input panel, audio recording, response playback |
-| **Backend Server** | FastAPI + Uvicorn | REST API coordinating STT, agent, and TTS |
-| **Speech-to-Text** | MLX Whisper (Large V3) | On-device audio transcription via Apple Silicon Neural Engine |
-| **AI Agent** | LangChain + Ollama | Conversational agent with tool-calling capabilities and in-process message history |
-| **Text-to-Speech** | Kokoro or Voxtral 4B (MLX Audio) | On-device streaming voice synthesis |
-| **macOS Tools** | AppleScript (`osascript`) | System state, settings, notifications, speech, iMessage, Mail, Contacts, Notes, Reminders, Calendar, clipboard, Safari, Finder, Music, Trash |
+| Layer | Technology |
+|---|---|
+| **UI** | SwiftUI, SwiftData, AVFoundation, AppKit |
+| **Backend** | FastAPI + Uvicorn |
+| **LLM** | Ollama (gemma4) via LangChain / LangGraph |
+| **STT** | MLX Whisper Large v3 |
+| **TTS** | Kokoro 82M / Voxtral 4B via MLX Audio + misaki |
+| **Tools** | AppleScript (AppKit), DuckDuckGo, Open-Meteo, Trafilatura |
 
----
+## Quick Start
 
-## 📋 Requirements
-
-- **macOS** with Apple Silicon (M1/M2/M3/M4) — required for MLX acceleration
-- **Xcode 15+** — to build and run the macOS app
-- **Python 3.13+** — for the backend server
-- **[Ollama](https://ollama.ai/)** — local LLM inference server
-- **~26 GB free disk space** — for the default `gemma4:26b` model and Whisper Large V3
-
----
-
-## 🚀 Setup
-
-### 1. Install Ollama
-
-Download and install Ollama from [ollama.ai](https://ollama.ai/), then pull the default model:
-
-```bash
-ollama pull gemma4:26b
-```
-
-Ollama will start automatically and listen on `http://localhost:11434`.
-
-### 2. Set Up the Backend
-
-```bash
-# Navigate to the backend directory
-cd backend
-
-# Create a virtual environment and install dependencies
-python -m venv .venv
-source .venv/bin/activate
-pip install -e .
-```
-
-Or use [`uv`](https://github.com/astral-sh/uv) for faster installs:
+### 1. Backend
 
 ```bash
 cd backend
 uv sync
+uv run ruff format src
+uv run ruff check --fix src
+uv run python src/viva_api_server.py
+# Server starts on http://127.0.0.1:8001
 ```
 
-### 3. Start the Backend Server
+**Prerequisites:**
+- Python ≥3.13
+- Ollama running locally with a compatible model (default: `gemma-4-E4B-it-8bit`)
+- Apple Silicon Mac (MLX requires arm64)
 
-```bash
-cd backend
-source .venv/bin/activate
-python viva_api_server.py
-```
+### 2. macOS App
 
-The server starts on `http://127.0.0.1:8000`. On first launch, it will download and cache the Whisper model (~3 GB) and warm up inference — this may take a minute or two.
+Open `macos-app/Viva.xcodeproj` in Xcode and build/run. The app communicates with the backend on `localhost:8001` by default.
 
-### 4. Build and Run the macOS App
-
-Open the Xcode project:
-
-```bash
-open macos-app/Viva.xcodeproj
-```
-
-Select your Mac as the destination and press **⌘R** to build and run. The Viva icon will appear in your menubar.
-
----
-
-## ⚙️ Configuration
-
-All configuration is done via environment variables. Set them in your shell or a `.env` file in the `backend/` directory:
-
-| Variable | Default | Description |
-|---|---|---|
-| `VIVA_OLLAMA_MODEL` | `gemma4:26b` | Ollama model to use for the agent |
-| `VIVA_OLLAMA_BASE_URL` | `http://localhost:11434/v1/` | Ollama API endpoint |
-| `VIVA_OLLAMA_API_KEY` | `ollama` | API key for Ollama (usually not needed) |
-| `VIVA_TTS_ENGINE` | `voxtral` | TTS engine. Supported values: `kokoro`, `voxtral` |
-| `VIVA_TTS_MODEL` | `prince-canuma/Kokoro-82M` | Kokoro model used for speech synthesis |
-| `VIVA_VOXTRAL_TTS_MODEL` | `mlx-community/Voxtral-4B-TTS-2603-mlx-4bit` | Voxtral 4B model used when `VIVA_TTS_ENGINE=voxtral` |
-| `VIVA_TTS_VOICE_GENDER` | `female` | Default Voxtral voice gender for non-app callers. The macOS menu can choose male or female per request |
-| `VIVA_TTS_OUTPUT_DIR` | system temp `viva_tts_audio` directory | Directory for generated TTS audio files |
-| `VIVA_TTS_WARMUP` | `1` | Set to `0` to skip pre-loading the TTS model at startup |
-
-Example with a custom model:
-
-```bash
-VIVA_OLLAMA_MODEL=llama3.3:70b python viva_api_server.py
-```
-
----
-
-## 🎯 How to Use
-
-1. **Click the Viva icon** in the menubar to open the floating input panel.
-2. **Tap the microphone** (🎙️) button and speak your request.
-3. Viva transcribes your speech, sends it to the AI agent, and plays back the spoken response.
-4. **Right-click** the menubar icon for Settings or to Quit.
-5. Optionally enable **"Share Screen"** to include a screenshot with your request.
-
-### Example Commands
-
-- *"What's the weather like in Rome?"*
-- *"Set a reminder to call Mom at 5 PM"*
-- *"Set a 10-minute timer for pasta"*
-- *"Cancel the pasta timer"*
-- *"Add lunch with Sara to my calendar tomorrow at 1 PM"*
-- *"What's on my calendar this week?"*
-- *"Find a free slot for a 30-minute meeting tomorrow afternoon"*
-- *"Show me unread emails from Maria"*
-- *"Zip the files I selected in Finder"*
-- *"Notify me when this is done"*
-- *"Turn on dark mode"*
-- *"Search for the latest Python release"*
-- *"What's on my clipboard?"*
-- *"Send a message to John saying see you tomorrow"*
-- *"List my reminders"*
-
----
-
-## 📁 Project Structure
+## Project Structure
 
 ```
 viva-project/
 ├── macos-app/
-│   └── Viva.xcodeproj/           # Xcode project for the macOS menubar app
-│       └── Viva/
-│           ├── VivaApp.swift      # App entry point, menubar setup, panel management
-│           ├── ContentView.swift  # Floating panel UI, audio recording, API calls
-│           ├── ScreenShotManager.swift  # Screenshot capture utility
-│           └── Item.swift         # SwiftData model
+│   └── Viva/                  # SwiftUI app (Xcode project)
+│       ├── VivaApp.swift      # App entry point
+│       ├── ContentView.swift  # Floating panel UI + mic/screenshot
+│       ├── FloatingPanel.swift# NSPanel overlay
+│       ├── ContentViewModel.swift  # Orchestrates record → API → TTS
+│       ├── AppDelegate.swift        # Menubar icon setup
+│       ├── ScreenShotManager.swift # Display capture
+│       ├── Services/              # API client, audio recorder/player
+│       └── Models/                # Data types
 ├── backend/
-│   ├── viva_api_server.py         # FastAPI server (STT, agent, TTS endpoints)
-│   ├── langchain_agent.py         # LangChain agent service and multimodal message handling
-│   ├── pyproject.toml             # Python dependencies
-│   ├── tools/
-│   │   ├── tts_common.py          # Shared TTS data/audio helpers
-│   │   ├── tts_factory.py         # Kokoro/Voxtral service selection
-│   │   ├── tts_tools.py           # Kokoro TTS synthesis on MLX Audio
-│   │   └── voxtral_tts_tools.py   # Voxtral 4B TTS synthesis on MLX Audio
-│   ├── agent_tools/
-│   │   ├── general_tools.py       # Date/time, web, weather, and Python tools
-│   │   └── applescript_tools/     # Modular macOS AppleScript tools
-│   │       ├── __init__.py        # Collects all AppleScript tools for the LangChain agent
-│   │       ├── core.py            # Shared AppleScript/date helpers
-│   │       ├── system.py          # Volume, mute, dark mode
-│   │       ├── system_state.py    # Battery, Wi-Fi, settings, lock screen
-│   │       ├── feedback.py        # macOS notifications and spoken feedback
-│   │       ├── productivity.py    # Messages and Notes
-│   │       ├── reminders.py       # Reminders management
-│   │       ├── calendar.py        # Calendar event management
-│   │       ├── mail_contacts.py   # Mail and Contacts automation
-│   │       ├── finder.py          # Safe Finder organization utilities
-│   │       ├── context.py         # Clipboard, Safari, Finder context
-│   │       └── media_files.py     # Music and Trash
-│   └── chains/
-│       └── applescript_generator.py  # AppleScript generation chain
-└── README.md
+│   └── src/
+│       ├── viva_api_server.py     # FastAPI server (STT, agent, TTS endpoints)
+│       ├── langchain_agent.py     # LangGraph agent + conversation management
+│       ├── agent_tools/           # macOS automation tools (50+)
+│       │   ├── applescript_tools/ # System, calendar, mail, music, Finder...
+│       │   ├── general_tools.py   # Web search, weather, datetime, Python REPL
+│       │   └── chains/            # AppleScript generation chains
+│       └── tools/                 # TTS (Kokoro + Voxtral)
+└── Makefile
 ```
 
----
+## API Reference
 
-## 🔧 Development
-
-### Backend
-
-```bash
-cd backend
-source .venv/bin/activate
-python viva_api_server.py
-```
-
-The server auto-reloads on file changes (via Uvicorn's `reload=True`).
-
-### macOS App
-
-Build and run directly from Xcode. The app communicates with the backend via HTTP on `localhost:8000`.
-
-### API Endpoints
-
-| Method | Endpoint | Description |
+| Endpoint | Method | Description |
 |---|---|---|
-| `POST` | `/transcribe` | Upload audio file → returns transcribed text |
-| `POST` | `/viva` | Send text (+ optional screenshot and request ID) → returns AI response + TTS audio |
-| `POST` | `/viva/cancel/{id}` | Cancel an in-progress Viva request by request ID |
+| `/transcribe` | POST | Upload audio → returns transcribed text |
+| `/viva` | POST | Send text (+ screenshot) → returns AI response + TTS audio |
+| `/viva/native-audio` | POST | Send raw audio file → multimodal LLM + TTS |
+| `/viva/tts-stream/{id}` | GET | Stream PCM audio for TTS playback |
+| `/viva/cancel/{id}` | POST | Cancel an in-progress request |
 
+## Configuration
 
----
+Environment variables for customization:
 
-## 🤝 Contributing
+| Variable | Default | Description |
+|---|---|---|
+| `VIVA_OLLAMA_MODEL` | `gemma-4-E4B-it-MLX-8bit` | LLM model |
+| `VIVA_OLLAMA_BASE_URL` | `http://127.0.0.1:8000/v1` | Ollama endpoint |
+| `VIVA_TTS_ENGINE` | `kokoro` | TTS engine (`kokoro` or `voxtral`) |
+| `VIVA_TTS_VOICE_GENDER` | `female` | Voice gender for TTS |
 
-Contributions are welcome! Here are some areas where help is needed:
+## License
 
-- More AppleScript tool domains for deeper macOS integration
-- Vision support for screenshot understanding
-- Persistent cross-session conversation history
-- Settings panel for model and voice preferences
-- Support for additional TTS voices and languages
-
-Please open an issue or pull request on GitHub.
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+MIT — see [LICENSE](LICENSE)

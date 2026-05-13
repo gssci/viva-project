@@ -18,9 +18,9 @@ from langchain_core.runnables import RunnableConfig
 
 logger = logging.getLogger(__name__)
 
-OLLAMA_MODEL = os.getenv("VIVA_OLLAMA_MODEL", "gemma4:e4b")
-OLLAMA_BASE_URL = os.getenv("VIVA_OLLAMA_BASE_URL", "http://localhost:11434/v1/")
-OLLAMA_API_KEY = os.getenv("VIVA_OLLAMA_API_KEY", "ollama")
+OLLAMA_MODEL = os.getenv("VIVA_OLLAMA_MODEL", "gemma-4-E4B-it-MLX-8bit")
+OLLAMA_BASE_URL = os.getenv("VIVA_OLLAMA_BASE_URL", "http://127.0.0.1:8000/v1")
+OLLAMA_API_KEY = os.getenv("VIVA_OLLAMA_API_KEY", "ollm")
 DEFAULT_IMAGE_MIME_TYPE = "image/jpeg"
 DEFAULT_AUDIO_MIME_TYPE = "audio/wav"
 MAX_HISTORY_MESSAGES = 5

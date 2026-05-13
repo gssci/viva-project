@@ -3,7 +3,7 @@ import subprocess
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-
+from excel_applescript_prompt import excel_system_mgs
 
 # --- Custom Exceptions ---
 class AppleScriptExtractionError(Exception):
@@ -75,10 +75,9 @@ def generate_and_verify_applescript(user_query: str, max_retries: int = 2) -> st
     Generates an AppleScript using an LLM, verifies it, and retries upon failure.
     """
     llm = ChatOpenAI(
-        base_url="http://localhost:11434/v1",
-        api_key="ollama",
-        model="gemma4:26b",
-        temperature=0.1,
+        base_url="http://localhost:8000/v1",
+        api_key="ollm",
+        model="gemma-4-26b-a4b-it-4bit"
     )
 
     system_instruction = (
@@ -155,7 +154,7 @@ def generate_and_verify_applescript(user_query: str, max_retries: int = 2) -> st
 # --- Example Usage ---
 if __name__ == "__main__":
     # Deliberately asking for a syntax error to test the retry loop
-    task = "Create a notification that says 'Hello World'."
+    task = "Create an excel file to plot my weight data containing a plot with the data points. Invent sintetic data with dates and weights in kilos to populate the worksheet."
 
     final_script = generate_and_verify_applescript(task)
 
