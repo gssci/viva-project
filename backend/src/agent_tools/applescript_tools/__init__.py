@@ -99,7 +99,7 @@ from .timers import (
     timer_tools,
     update_timer,
 )
-
+from .media_converter import media_converter_tools
 
 all_mac_tools = [
     *system_tools,
@@ -114,6 +114,7 @@ all_mac_tools = [
     *music_tools,
     *media_file_tools,
     *timer_tools,
+    *media_converter_tools
 ]
 
 

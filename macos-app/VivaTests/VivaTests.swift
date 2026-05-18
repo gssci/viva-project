@@ -24,7 +24,7 @@ struct VivaTests {
             "text": "Done",
             "processing_time": 1.25,
             "used_screenshot": true,
-            "audio_url": "http://127.0.0.1:8001/audio/result.wav",
+            "audio_url": "http://127.0.0.1:8000/audio/result.wav",
             "audio_content_type": "audio/wav",
             "tts_language": "en",
             "tts_voice": "alloy",
@@ -38,7 +38,7 @@ struct VivaTests {
         #expect(response.text == "Done")
         #expect(response.processingTime == 1.25)
         #expect(response.usedScreenshot == true)
-        #expect(response.audioURL?.absoluteString == "http://127.0.0.1:8001/audio/result.wav")
+        #expect(response.audioURL?.absoluteString == "http://127.0.0.1:8000/audio/result.wav")
         #expect(response.audioContentType == "audio/wav")
         #expect(response.ttsLanguage == "en")
         #expect(response.ttsVoice == "alloy")
