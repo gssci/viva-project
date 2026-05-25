@@ -1,9 +1,10 @@
 import re
+import os
 import subprocess
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import StrOutputParser
-from excel_applescript_prompt import excel_system_mgs
+
 
 # --- Custom Exceptions ---
 class AppleScriptExtractionError(Exception):
@@ -75,9 +76,16 @@ def generate_and_verify_applescript(user_query: str, max_retries: int = 2) -> st
     Generates an AppleScript using an LLM, verifies it, and retries upon failure.
     """
     llm = ChatOpenAI(
-        base_url="http://localhost:8000/v1",
-        api_key="ollm",
-        model="gemma-4-26b-a4b-it-4bit"
+        base_url=os.getenv(
+            "VIVA_LLM_BASE_URL",
+            os.getenv("VIVA_OMLX_BASE_URL", "http://127.0.0.1:8000/v1"),
+        ),
+        api_key=os.getenv(
+            "VIVA_LLM_API_KEY", os.getenv("VIVA_OMLX_API_KEY", "not-needed")
+        ),
+        model=os.getenv(
+            "VIVA_LLM_MODEL", os.getenv("VIVA_OMLX_MODEL", "gemma-4-E4B-it-Q4_K_M.gguf")
+        ),
     )
 
     system_instruction = (

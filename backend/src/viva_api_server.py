@@ -36,6 +36,8 @@ TTS_OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
 TTS_STREAM_MAX_AGE_SECONDS = 5 * 60
 DEFAULT_TTS_VOICE_GENDER = os.getenv("VIVA_TTS_VOICE_GENDER", "female")
 SUPPORTED_TTS_VOICE_GENDERS = {"male", "female"}
+BACKEND_HOST = os.getenv("VIVA_BACKEND_HOST", "127.0.0.1")
+BACKEND_PORT = int(os.getenv("VIVA_BACKEND_PORT", "8001"))
 _END_OF_STREAM = object()
 
 
@@ -102,7 +104,9 @@ async def lifespan(app: FastAPI):
     if os.getenv("VIVA_TTS_WARMUP", "1") == "1":
         logger.info("Pre-loading TTS model into memory...")
         loop = asyncio.get_running_loop()
-        await loop.run_in_executor(app.state.tts_executor, app.state.tts_service.warm_up)
+        await loop.run_in_executor(
+            app.state.tts_executor, app.state.tts_service.warm_up
+        )
 
     logger.info(
         f"Model successfully loaded and cached in {time.time() - start_time:.2f} seconds."
@@ -121,6 +125,11 @@ app.mount(
     StaticFiles(directory=str(TTS_OUTPUT_DIR)),
     name="generated-audio",
 )
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
 
 
 async def _clear_active_viva_task(
@@ -371,7 +380,9 @@ async def viva_tts_stream(request: Request, request_id: str):
             logger.info("TTS stream closed by client. request_id=%s", request_id)
             raise
         except Exception as exc:
-            logger.exception("TTS stream failed. request_id=%s error=%s", request_id, exc)
+            logger.exception(
+                "TTS stream failed. request_id=%s error=%s", request_id, exc
+            )
         finally:
             await loop.run_in_executor(
                 request.app.state.tts_executor,
@@ -453,4 +464,6 @@ async def transcribe(file: UploadFile = File(...)):
 
 if __name__ == "__main__":
     # Standard Uvicorn startup
-    uvicorn.run("viva_api_server:app", host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run(
+        "viva_api_server:app", host=BACKEND_HOST, port=BACKEND_PORT, reload=True
+    )

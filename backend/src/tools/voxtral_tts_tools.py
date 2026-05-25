@@ -116,8 +116,10 @@ def _env_int(name: str, default: int) -> int:
 
 def _normalize_voice_gender(voice_gender: str | None) -> str:
     normalized = (
-        voice_gender or os.getenv("VIVA_TTS_VOICE_GENDER") or DEFAULT_VOICE_GENDER
-    ).strip().lower()
+        (voice_gender or os.getenv("VIVA_TTS_VOICE_GENDER") or DEFAULT_VOICE_GENDER)
+        .strip()
+        .lower()
+    )
     if normalized not in {"male", "female"}:
         logger.warning(
             "Unsupported Voxtral voice gender '%s'. Falling back to '%s'.",

@@ -2,7 +2,7 @@ import AppKit
 import Foundation
 
 struct VivaAPIClient {
-    var baseURL = URL(string: "http://127.0.0.1:8000")!
+    var baseURL = URL(string: "http://127.0.0.1:8001")!
     var session = URLSession.shared
     var requestTimeout: TimeInterval = 120
 

@@ -4,11 +4,11 @@ A macOS menubar AI assistant that runs entirely on-device. No cloud APIs, no dat
 
 ## Overview
 
-Viva provides a voice-first, private alternative to Siri on Apple Silicon Macs. Powered by open-source models running locally via MLX and Ollama, it handles voice input, natural language understanding, and spoken responses — all with zero external dependencies.
+Viva provides a voice-first, private alternative to Siri on Apple Silicon Macs. Powered by open-source models running locally via MLX and oMLX, it handles voice input, natural language understanding, and spoken responses — all with zero external dependencies.
 
 **Key capabilities:**
 - Voice transcription via MLX Whisper Large v3 (auto language detection)
-- LLM agent via Ollama with in-process conversation history
+- LLM agent via oMLX with in-process conversation history
 - Streaming text-to-speech (Kokoro or Voxtral 4B via MLX Audio)
 - 50+ macOS automation tools: system controls, Calendar, Reminders, Messages, Mail, Finder, Music, Safari, clipboard, and more
 - Web search (DuckDuckGo), weather (Open-Meteo), and webpage extraction
@@ -28,7 +28,7 @@ Viva provides a voice-first, private alternative to Siri on Apple Silicon Macs. 
          ▼
 ┌─────────────────────────────────────┐
 │         Backend (FastAPI)           │
-│  Whisper STT  │  Ollama LLM Agent  │
+│  Whisper STT  │  oMLX LLM Agent    │
 │  Kokoro/Vox TTS│  50+ macOS tools  │
 └─────────────────────────────────────┘
 ```
@@ -39,7 +39,7 @@ Viva provides a voice-first, private alternative to Siri on Apple Silicon Macs. 
 |---|---|
 | **UI** | SwiftUI, SwiftData, AVFoundation, AppKit |
 | **Backend** | FastAPI + Uvicorn |
-| **LLM** | Ollama (gemma4) via LangChain / LangGraph |
+| **LLM** | oMLX via LangChain / LangGraph |
 | **STT** | MLX Whisper Large v3 |
 | **TTS** | Kokoro 82M / Voxtral 4B via MLX Audio + misaki |
 | **Tools** | AppleScript (AppKit), DuckDuckGo, Open-Meteo, Trafilatura |
@@ -57,14 +57,27 @@ uv run python src/viva_api_server.py
 # Server starts on http://127.0.0.1:8001
 ```
 
+Make sure the oMLX Homebrew service is installed and enabled:
+
+```bash
+brew services start omlx
+```
+
+Then launch the backend:
+
+```bash
+cd backend
+make backend
+```
+
 **Prerequisites:**
 - Python ≥3.13
-- Ollama running locally with a compatible model (default: `gemma-4-E4B-it-8bit`)
+- oMLX installed as a Homebrew service with a compatible model. For screenshot queries, use a vision-language model.
 - Apple Silicon Mac (MLX requires arm64)
 
 ### 2. macOS App
 
-Open `macos-app/Viva.xcodeproj` in Xcode and build/run. The app communicates with the backend on `localhost:8001` by default.
+Open `macos-app/Viva.xcodeproj` in Xcode and build/run. The app starts the backend with `make backend` from the `backend/` directory and communicates with it on `localhost:8001` by default.
 
 ## Project Structure
 
@@ -108,8 +121,11 @@ Environment variables for customization:
 
 | Variable | Default | Description |
 |---|---|---|
-| `VIVA_OLLAMA_MODEL` | `gemma-4-E4B-it-MLX-8bit` | LLM model |
-| `VIVA_OLLAMA_BASE_URL` | `http://127.0.0.1:8000/v1` | Ollama endpoint |
+| `VIVA_OMLX_MODEL` | `gemma-4-e4b-it-4bit` | LLM model |
+| `VIVA_OMLX_BASE_URL` | `http://127.0.0.1:8000/v1` | oMLX endpoint |
+| `VIVA_OMLX_API_KEY` | `not-needed` | oMLX API key |
+| `VIVA_BACKEND_HOST` | `127.0.0.1` | Backend host |
+| `VIVA_BACKEND_PORT` | `8001` | Backend port |
 | `VIVA_TTS_ENGINE` | `kokoro` | TTS engine (`kokoro` or `voxtral`) |
 | `VIVA_TTS_VOICE_GENDER` | `female` | Voice gender for TTS |
 

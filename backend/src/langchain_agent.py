@@ -18,12 +18,18 @@ from langchain_core.runnables import RunnableConfig
 
 logger = logging.getLogger(__name__)
 
-OLLAMA_MODEL = os.getenv("VIVA_OLLAMA_MODEL", "gemma-4-e4b-it-4bit")
-OLLAMA_BASE_URL = os.getenv("VIVA_OLLAMA_BASE_URL", "http://127.0.0.1:8001/v1")
-OLLAMA_API_KEY = os.getenv("VIVA_OLLAMA_API_KEY", "ollm")
+LLM_MODEL = os.getenv(
+    "VIVA_LLM_MODEL", os.getenv("VIVA_OMLX_MODEL", "gemma-4-E4B-it-Q4_K_M.gguf")
+)
+LLM_BASE_URL = os.getenv(
+    "VIVA_LLM_BASE_URL", os.getenv("VIVA_OMLX_BASE_URL", "http://127.0.0.1:8000/v1")
+)
+LLM_API_KEY = os.getenv(
+    "VIVA_LLM_API_KEY", os.getenv("VIVA_OMLX_API_KEY", "not-needed")
+)
 DEFAULT_IMAGE_MIME_TYPE = "image/jpeg"
 DEFAULT_AUDIO_MIME_TYPE = "audio/wav"
-MAX_HISTORY_MESSAGES = 5
+MAX_HISTORY_MESSAGES = 3
 
 SYSTEM_PROMPT = (
     "You are Viva, a useful, concise and action-oriented assistant. "
@@ -93,16 +99,18 @@ def _build_user_message(
         content_blocks.append(audio_block)
 
     if screenshot_bytes:
-        image_block: dict[str, Any] = {
-            "type": "image",
-            "base64": base64.b64encode(screenshot_bytes).decode("ascii"),
-            "mime_type": _normalize_image_mime_type(screenshot_content_type),
-        }
-        if screenshot_filename:
-            image_block["extras"] = {"filename": screenshot_filename}
-        content_blocks.append(image_block)
+        image_mime_type = _normalize_image_mime_type(screenshot_content_type)
+        image_base64 = base64.b64encode(screenshot_bytes).decode("ascii")
+        content_blocks.append(
+            {
+                "type": "image_url",
+                "image_url": {
+                    "url": f"data:{image_mime_type};base64,{image_base64}",
+                },
+            }
+        )
 
-    return HumanMessage(content_blocks=content_blocks)
+    return HumanMessage(content=content_blocks)
 
 
 def _text_from_content_block(block: Any) -> str:
@@ -174,6 +182,70 @@ def _clean_history_message(message: BaseMessage) -> BaseMessage | None:
     return None
 
 
+def _write_prompt_to_file(messages: list[BaseMessage]) -> None:
+    try:
+        from datetime import datetime
+
+        root_dir = os.path.dirname(
+            os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        )
+        logs_dir = os.path.join(root_dir, ".logs")
+        os.makedirs(logs_dir, exist_ok=True)
+        log_file_path = os.path.join(logs_dir, "agent_prompts.txt")
+
+        now_str = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+        log_lines = []
+        log_lines.append("=" * 60)
+        log_lines.append(f"Timestamp: {now_str}")
+        log_lines.append("=== PROMPT SENT TO MODEL ===")
+
+        for msg in messages:
+            role = type(msg).__name__
+            content = msg.content
+
+            if isinstance(content, str):
+                log_lines.append(f"[{role}]: {content.strip()}")
+            elif isinstance(content, list):
+                log_lines.append(f"[{role}]:")
+                for block in content:
+                    if isinstance(block, dict):
+                        block_type = block.get("type")
+                        if block_type == "text":
+                            log_lines.append(
+                                f"  - Text: {block.get('text', '').strip()}"
+                            )
+                        elif block_type == "image_url":
+                            url = block.get("image_url", {}).get("url", "")
+                            if url.startswith("data:image"):
+                                truncated_url = (
+                                    url[:60] + "... [truncated base64 image data]"
+                                )
+                                log_lines.append(f"  - Image URL: {truncated_url}")
+                            else:
+                                log_lines.append(f"  - Image URL: {url}")
+                        elif block_type == "audio":
+                            mime = block.get("mime_type", "unknown")
+                            log_lines.append(
+                                f"  - Audio: [base64 audio data, mime={mime} (truncated)]"
+                            )
+                        else:
+                            log_lines.append(
+                                f"  - {block_type or 'Unknown'}: {str(block)}"
+                            )
+                    else:
+                        log_lines.append(f"  - {str(block)}")
+            else:
+                log_lines.append(f"[{role}]: {str(content)}")
+
+        log_lines.append("=" * 60 + "\n\n")
+
+        with open(log_file_path, "a", encoding="utf-8") as f:
+            f.write("\n".join(log_lines))
+
+    except Exception as e:
+        logger.error("Failed to write agent prompt to file: %s", e)
+
+
 @before_model
 def trim_messages(state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
     """Keep compact text-only conversation history before each model call."""
@@ -202,6 +274,9 @@ def trim_messages(state: AgentState, runtime: Runtime) -> dict[str, Any] | None:
     compact_history = conversation_messages[-MAX_HISTORY_MESSAGES:]
     new_messages = [*system_messages, *compact_history, *current_turn_messages]
 
+    # Write the compiled prompt to the log file before calling the model
+    _write_prompt_to_file(new_messages)
+
     if new_messages == messages:
         return None
 
@@ -228,9 +303,9 @@ class VivaAgentService:
                 return
 
             llm = ChatOpenAI(
-                model=OLLAMA_MODEL,
-                base_url=OLLAMA_BASE_URL,
-                api_key=OLLAMA_API_KEY,
+                model=LLM_MODEL,
+                base_url=LLM_BASE_URL,
+                api_key=LLM_API_KEY,
             )
             self._agent = create_agent(
                 model=llm,
@@ -239,7 +314,10 @@ class VivaAgentService:
                 middleware=[trim_messages],
                 checkpointer=InMemorySaver(),
             )
-            logger.info("Viva agent initialized with model '%s'.", OLLAMA_MODEL)
+            logger.info(
+                "Viva agent initialized with LLM model '%s' via llama-server.",
+                LLM_MODEL,
+            )
 
     async def run(
         self,
@@ -270,8 +348,8 @@ class VivaAgentService:
                 {"messages": [user_message]},
                 config=config,
             )
-
         response_text = _extract_response_text(response)
+        logger.info(response_text)
         if not response_text:
             raise RuntimeError("The agent did not return text.")
         return response_text

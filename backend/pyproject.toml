@@ -18,6 +18,7 @@ dependencies = [
     "mistral-common[audio]>=1.11.2",
     "mlx-audio>=0.4.2",
     "mlx-whisper>=0.4.2",
+    "pymupdf>=1.27.2.3",
     "python-multipart>=0.0.20",
     "requests>=2.32.3",
     "trafilatura>=2.0.0",

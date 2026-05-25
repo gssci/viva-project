@@ -7,10 +7,22 @@ from .general_tools import (
     python_repl_tool,
     web_search,
 )
+from .pdf_tools import (
+    convert_pdf_to_markdown,
+    extract_pdf_images,
+    extract_pdf_text,
+    get_pdf_metadata,
+    pdf_tools,
+    render_pdf_pages_to_images,
+    search_pdf_text,
+    split_pdf_pages,
+    summarize_pdf,
+)
 
 
 all_agent_tools = [
     *general_tools,
+    *pdf_tools,
     *all_mac_tools,
 ]
 
@@ -22,6 +34,15 @@ __all__ = [
     "general_tools",
     "get_current_datetime",
     "get_weather",
+    "get_pdf_metadata",
+    "convert_pdf_to_markdown",
+    "extract_pdf_images",
+    "extract_pdf_text",
+    "pdf_tools",
     "python_repl_tool",
+    "render_pdf_pages_to_images",
+    "search_pdf_text",
+    "split_pdf_pages",
+    "summarize_pdf",
     "web_search",
 ]

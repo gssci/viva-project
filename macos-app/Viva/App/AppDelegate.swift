@@ -8,9 +8,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSWindowDelegate {
 
     func applicationDidFinishLaunching(_ notification: Notification) {
         AppPreferences.registerDefaults()
+        BackendLauncher.shared.start()
         configureFloatingPanel()
         configureStatusItem()
         configureGlobalClickMonitor()
+    }
+
+    func applicationWillTerminate(_ notification: Notification) {
+        BackendLauncher.shared.stop()
     }
 
     @objc private func handleMenuClick(_ sender: NSStatusBarButton) {

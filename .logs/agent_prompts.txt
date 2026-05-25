@@ -1,0 +1,263 @@
+============================================================
+Timestamp: 2026-05-22 18:58:45
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: ciao
+============================================================
+
+============================================================
+Timestamp: 2026-05-22 19:01:00
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: ciao
+============================================================
+
+============================================================
+Timestamp: 2026-05-22 19:02:57
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: ciao
+[HumanMessage]: ciao
+============================================================
+
+============================================================
+Timestamp: 2026-05-22 19:03:17
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: ciao
+[HumanMessage]: ciao
+[AIMessage]: Hello. How can I assist you today?
+[HumanMessage]: turn on light mode
+============================================================
+
+============================================================
+Timestamp: 2026-05-22 19:03:21
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: ciao
+[HumanMessage]: ciao
+[AIMessage]: Hello. How can I assist you today?
+[HumanMessage]: turn on light mode
+[AIMessage]: <eos>
+[ToolMessage]: Light Mode enabled.
+============================================================
+
+============================================================
+Timestamp: 2026-05-22 19:03:36
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Hello. How can I assist you today?
+[HumanMessage]: turn on light mode
+[AIMessage]: <eos>
+[HumanMessage]: open music app, then play madonna
+============================================================
+
+============================================================
+Timestamp: 2026-05-22 19:03:40
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Hello. How can I assist you today?
+[HumanMessage]: turn on light mode
+[AIMessage]: <eos>
+[HumanMessage]: open music app, then play madonna
+[AIMessage]: <eos>
+[ToolMessage]: Now playing: Hello and Goodbye
+============================================================
+
+============================================================
+Timestamp: 2026-05-22 19:03:59
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: <eos>
+[HumanMessage]: open music app, then play madonna
+[AIMessage]: <eos>
+[HumanMessage]: play britney
+============================================================
+
+============================================================
+Timestamp: 2026-05-22 19:04:00
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: <eos>
+[HumanMessage]: open music app, then play madonna
+[AIMessage]: <eos>
+[HumanMessage]: play britney
+[AIMessage]: <eos>
+[ToolMessage]: Now playing: Breathe On Me (feat. Ying Yang Twins) [Jaques LuCont's Thin White Duke Mix]
+============================================================
+
+============================================================
+Timestamp: 2026-05-22 19:04:26
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: <eos>
+[HumanMessage]: play britney
+[AIMessage]: <eos>
+[HumanMessage]:
+  - Text: what
+  - Image URL: data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAASABIAAD/4QBARXhpZ... [truncated base64 image data]
+============================================================
+
+============================================================
+Timestamp: 2026-05-22 19:04:29
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: <eos>
+[HumanMessage]: play britney
+[AIMessage]: <eos>
+[HumanMessage]:
+  - Text: what
+  - Image URL: data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAASABIAAD/4QBARXhpZ... [truncated base64 image data]
+[AIMessage]: <eos>
+[ToolMessage]: Now playing: Breathe On Me (feat. Ying Yang Twins) [Jaques LuCont's Thin White Duke Mix]
+============================================================
+
+============================================================
+Timestamp: 2026-05-22 23:11:25
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: hi
+============================================================
+
+============================================================
+Timestamp: 2026-05-22 23:12:06
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: hi
+[AIMessage]: Hi there how can I help you today
+[HumanMessage]: wow
+============================================================
+
+============================================================
+Timestamp: 2026-05-22 23:12:31
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Hi there how can I help you today
+[HumanMessage]: wow
+[AIMessage]: Is there something specific you'd like to talk about or something I can help you with?
+[HumanMessage]: ok, I thought you were really slow there for a second
+============================================================
+
+============================================================
+Timestamp: 2026-05-22 23:12:59
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Is there something specific you'd like to talk about or something I can help you with?
+[HumanMessage]: ok, I thought you were really slow there for a second
+[AIMessage]: Sorry about that. I'm here and ready when you are. What can I do for you?
+[HumanMessage]:
+  - Text: Respond to the user request.
+  - Audio: [base64 audio data, mime=audio/wav (truncated)]
+============================================================
+
+============================================================
+Timestamp: 2026-05-22 23:13:24
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Sorry about that. I'm here and ready when you are. What can I do for you?
+[HumanMessage]: Respond to the user request.
+[AIMessage]: I'm sorry, I don't understand that. Could you please rephrase your request or tell me what you'd like me to do?
+[HumanMessage]:
+  - Text: describe my screenshot
+  - Image URL: data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAASABIAAD/4QBARXhpZ... [truncated base64 image data]
+============================================================
+
+============================================================
+Timestamp: 2026-05-23 12:58:51
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: I'm sorry, I don't understand that. Could you please rephrase your request or tell me what you'd like me to do?
+[HumanMessage]: describe my screenshot
+[AIMessage]: It's a screenshot of a YouTube video titled "The VEIL Created the Deathly Hallows?! | Harry Potter Theory" by SuperCarlinBrothers. It shows a man in a themed room discussing Harry Potter lore, with a quote overlaying the video that says, "And it gets better, because what does the cloak in the Tale of the Three Brothers do?".
+[HumanMessage]: che tempo fa a favara?
+============================================================
+
+============================================================
+Timestamp: 2026-05-23 12:58:54
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: I'm sorry, I don't understand that. Could you please rephrase your request or tell me what you'd like me to do?
+[HumanMessage]: describe my screenshot
+[AIMessage]: It's a screenshot of a YouTube video titled "The VEIL Created the Deathly Hallows?! | Harry Potter Theory" by SuperCarlinBrothers. It shows a man in a themed room discussing Harry Potter lore, with a quote overlaying the video that says, "And it gets better, because what does the cloak in the Tale of the Three Brothers do?".
+[HumanMessage]: che tempo fa a favara?
+[AIMessage]: 
+[ToolMessage]: Current weather for Favara, Valencia, Spain
+Coordinates: 39.1167, -0.2833
+Observed at: 2026-05-23T12:45
+Conditions: mainly clear (daytime)
+Temperature: 27.3 °C (feels like 28.9 °C)
+Humidity: 41 %
+Cloud cover: 15 %
+Precipitation: 0.0 mm
+Rain: 0.0 mm
+Showers: 0.0 mm
+Snowfall: 0.0 cm
+Wind: 9.7 km/h from E (94 °)
+Wind gusts: 24.1 km/h
+Mean sea-level pressure: 1025.2 hPa
+Surface pressure: 1021.6 hPa
+Source: Open-Meteo Forecast API and Geocoding API.
+============================================================
+
+============================================================
+Timestamp: 2026-05-23 13:45:32
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: It's a screenshot of a YouTube video titled "The VEIL Created the Deathly Hallows?! | Harry Potter Theory" by SuperCarlinBrothers. It shows a man in a themed room discussing Harry Potter lore, with a quote overlaying the video that says, "And it gets better, because what does the cloak in the Tale of the Three Brothers do?".
+[HumanMessage]: che tempo fa a favara?
+[AIMessage]: The weather in Favara is mainly clear right now, with a temperature of 27.3 degrees Celsius, but it feels like 28.9. The humidity is 41% and the wind is coming from the East at 9.7 km/h.
+[HumanMessage]: modalità scura
+============================================================
+
+============================================================
+Timestamp: 2026-05-23 13:45:34
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: It's a screenshot of a YouTube video titled "The VEIL Created the Deathly Hallows?! | Harry Potter Theory" by SuperCarlinBrothers. It shows a man in a themed room discussing Harry Potter lore, with a quote overlaying the video that says, "And it gets better, because what does the cloak in the Tale of the Three Brothers do?".
+[HumanMessage]: che tempo fa a favara?
+[AIMessage]: The weather in Favara is mainly clear right now, with a temperature of 27.3 degrees Celsius, but it feels like 28.9. The humidity is 41% and the wind is coming from the East at 9.7 km/h.
+[HumanMessage]: modalità scura
+[AIMessage]: 
+[ToolMessage]: Dark Mode enabled.
+============================================================
+
+============================================================
+Timestamp: 2026-05-23 13:45:50
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: The weather in Favara is mainly clear right now, with a temperature of 27.3 degrees Celsius, but it feels like 28.9. The humidity is 41% and the wind is coming from the East at 9.7 km/h.
+[HumanMessage]: modalità scura
+[AIMessage]: Dark mode is enabled.
+[HumanMessage]: light mode
+============================================================
+
+============================================================
+Timestamp: 2026-05-23 13:45:52
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: The weather in Favara is mainly clear right now, with a temperature of 27.3 degrees Celsius, but it feels like 28.9. The humidity is 41% and the wind is coming from the East at 9.7 km/h.
+[HumanMessage]: modalità scura
+[AIMessage]: Dark mode is enabled.
+[HumanMessage]: light mode
+[AIMessage]: 
+[ToolMessage]: Light Mode enabled.
+============================================================
+
+============================================================
+Timestamp: 2026-05-23 13:45:58
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Dark mode is enabled.
+[HumanMessage]: light mode
+[AIMessage]: Light mode enabled.
+[HumanMessage]: dark mode
+============================================================
+
+============================================================
+Timestamp: 2026-05-23 13:46:06
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Dark mode is enabled.
+[HumanMessage]: light mode
+[AIMessage]: Light mode enabled.
+[HumanMessage]: dark mode
+[AIMessage]: 
+[ToolMessage]: Dark Mode enabled.
+============================================================
+
+============================================================
+Timestamp: 2026-05-23 14:19:08
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Light mode enabled.
+[HumanMessage]: dark mode
+[AIMessage]: Dark Mode enabled.
+[HumanMessage]: che news oggi in sicilia?
+============================================================
+
+============================================================
+Timestamp: 2026-05-23 14:19:29
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Light mode enabled.
+[HumanMessage]: dark mode
+[AIMessage]: Dark Mode enabled.
+[HumanMessage]: che news oggi in sicilia?
+[AIMessage]: 
+[ToolMessage]: Web search failed: No results found.
+============================================================
+

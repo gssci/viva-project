@@ -114,7 +114,7 @@ all_mac_tools = [
     *music_tools,
     *media_file_tools,
     *timer_tools,
-    *media_converter_tools
+    *media_converter_tools,
 ]
 
 
