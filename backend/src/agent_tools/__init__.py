@@ -18,11 +18,16 @@ from .pdf_tools import (
     split_pdf_pages,
     summarize_pdf,
 )
+from .youtube_tools import (
+    download_youtube_video,
+    youtube_tools,
+)
 
 
 all_agent_tools = [
     *general_tools,
     *pdf_tools,
+    *youtube_tools,
     *all_mac_tools,
 ]
 
@@ -44,5 +49,7 @@ __all__ = [
     "search_pdf_text",
     "split_pdf_pages",
     "summarize_pdf",
+    "download_youtube_video",
+    "youtube_tools",
     "web_search",
 ]

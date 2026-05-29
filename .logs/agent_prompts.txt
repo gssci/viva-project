@@ -261,3 +261,260 @@ Timestamp: 2026-05-23 14:19:29
 [ToolMessage]: Web search failed: No results found.
 ============================================================
 
+============================================================
+Timestamp: 2026-05-25 12:49:31
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]:
+  - Text: Respond to the user request.
+  - Audio: [base64 audio data, mime=audio/wav (truncated)]
+  - Image URL: data:image/jpeg;base64,/9j/4AAQSkZJRgABAQAASABIAAD/4QBARXhpZ... [truncated base64 image data]
+============================================================
+
+============================================================
+Timestamp: 2026-05-25 12:50:24
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: Respond to the user request.
+[AIMessage]: I can't summarize the PDF because you haven't provided the file. Please upload the PDF or provide its path.
+[HumanMessage]:
+  - Text: Respond to the user request.
+  - Audio: [base64 audio data, mime=audio/wav (truncated)]
+============================================================
+
+============================================================
+Timestamp: 2026-05-25 12:50:42
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: Respond to the user request.
+[AIMessage]: I can't summarize the PDF because you haven't provided the file. Please upload the PDF or provide its path.
+[HumanMessage]:
+  - Text: Respond to the user request.
+  - Audio: [base64 audio data, mime=audio/wav (truncated)]
+[AIMessage]: 
+[ToolMessage]: /Users/savioscibetta/Downloads/Edicola di MIRCrew del 25 Maggio 2026 PDF Ita by Ciliegia85/Corriere della Sera 25 Maggio 2026.pdf
+============================================================
+
+============================================================
+Timestamp: 2026-05-25 12:51:34
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: I can't summarize the PDF because you haven't provided the file. Please upload the PDF or provide its path.
+[HumanMessage]: Respond to the user request.
+[AIMessage]: The path of the selected file is /Users/savioscibetta/Downloads/Edicola di MIRCrew del 25 Maggio 2026 PDF Ita by Ciliegia85/Corriere della Sera 25 Maggio 2026.pdf
+[HumanMessage]: Get the current.
+============================================================
+
+============================================================
+Timestamp: 2026-05-25 12:51:48
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: Respond to the user request.
+[AIMessage]: The path of the selected file is /Users/savioscibetta/Downloads/Edicola di MIRCrew del 25 Maggio 2026 PDF Ita by Ciliegia85/Corriere della Sera 25 Maggio 2026.pdf
+[HumanMessage]: Get the current.
+[HumanMessage]: Get the path of the current selected file in Finder and open it as a PDF and summarize.
+============================================================
+
+============================================================
+Timestamp: 2026-05-25 12:52:06
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: Respond to the user request.
+[AIMessage]: The path of the selected file is /Users/savioscibetta/Downloads/Edicola di MIRCrew del 25 Maggio 2026 PDF Ita by Ciliegia85/Corriere della Sera 25 Maggio 2026.pdf
+[HumanMessage]: Get the current.
+[HumanMessage]: Get the path of the current selected file in Finder and open it as a PDF and summarize.
+[AIMessage]: 
+[ToolMessage]: /Users/savioscibetta/Downloads/Edicola di MIRCrew del 25 Maggio 2026 PDF Ita by Ciliegia85/Corriere della Sera 25 Maggio 2026.pdf
+============================================================
+
+============================================================
+Timestamp: 2026-05-25 12:52:15
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: Respond to the user request.
+[AIMessage]: The path of the selected file is /Users/savioscibetta/Downloads/Edicola di MIRCrew del 25 Maggio 2026 PDF Ita by Ciliegia85/Corriere della Sera 25 Maggio 2026.pdf
+[HumanMessage]: Get the current.
+[HumanMessage]: Get the path of the current selected file in Finder and open it as a PDF and summarize.
+[AIMessage]: 
+[ToolMessage]: /Users/savioscibetta/Downloads/Edicola di MIRCrew del 25 Maggio 2026 PDF Ita by Ciliegia85/Corriere della Sera 25 Maggio 2026.pdf
+[AIMessage]: 
+[ToolMessage]: Path opened.
+[ToolMessage]: Extractive summary of Corriere della Sera 25 Maggio 2026.pdf:
+- a pagina 27 di Monica Guerzoni Vingegaard «frena» la tappa di Milano di Marco Bonarrigo a pagina 40 Giro d’Italia Antonelli fa poker Hamilton secondo di Daniele Sparisci e Giorgio Terruzzi a pagina 41 Formula 1 in Canada di Viviana Mazza e Greta Privitera --- Page 2 --- # 2 Lunedì 25 Maggio 2026 Corriere della Sera Primo piano MedioOriente in fiamme Il premier dal nostro corrispondente Davide Frattini Netanyahu in contropiede spera ancora che salti tutto «So che l’America non cederà sul trasferimento dell’uranio» Trump ora frena sull’intesa L’Iran: nodi da sciogliere La linea del presidente dopo aver annunciato un accordo «quasi fatto»: «Non possiamo avere fretta» DALLA NOSTRA CORRISPONDENTE NEW YORK Il memorandum d’intesa che gli Stati Uniti e l’Iran sarebbero vicini a firma- re prevede un’estensione del cessate il fuoco di 60 giorni, durante i quali lo Stretto di Hormuz verrebbe riaperto senza pedaggi, l’Iran rimuove- rebbe le mine e venderebbe il suo petrolio grazie anche alla sospensione di alcune sanzio- ni.
+- Quando il se- gretario di Stato Rubio, ieri a New Delhi, ha affermato che «sono stati fatti progressi si- gnificativi, ma non finali» e che il mondo non dovrà più aver paura di un’arma nucleare iraniana, l’ambasciata di Tehe- ran in India gli ha risposto ri- badendo il diritto inalienabile allatecnologianucleare.Ilpor- tavoce della Commissione per la sicurezza nazionale del Par- lamento iraniano, Ebrahim Rezaei, ha dichiarato ad Al Ja- zeera che «gli americani devo- no accettare le condizioni del- l’Iran, tra cui la fine della guer- ra, il pagamento di un risarci- mento e la revoca delle sanzioni».
+- © RIPRODUZIONE RISERVATA Corriere.it Le notizie dal mondo, con analisi e aggiornamenti in tempo reale, sul sito del «Corriere della Sera» Sul prato Donald Trump, 79 anni, mentre attraversa il South Lawn, lo spiazzo erboso sul «retro» della Casa Bianca (Afp) dalla nostra corrispondente Viviana Mazza NEW YORK Trump ha detto ieri che non «affretterà un accor- do» per porre fine alla guerra e che bisogna prendersi il tempo («Non possiamo com- mettere errori!»), dopo che una serie di membri del suo partito repubblicano hanno avvertito che potrebbe essere un «errore disastroso».
+- È portato a credere che la crisi dell’economia iraniana offra una leva agli Stati Uniti e spera che Teheran alla fine ceda, an- che se tutto indica che la Re- pubblica Islamica «pensi» in modo diverso.
+- Lo stesso Trump è intervenuto su questo: se sa- bato, dopo una telefonata con i leader del Golfo, aveva scrit- to su Truth che l’accordo era «ampiamente negoziato», ie- ri ha affermato che se farà «un Il post su Truth Obama no Sul suo social Truth (Verità), Trump scrive che il suo accordo sarà buono, «non come quello fatto da Obama» accordo, che non è stato anco- ra neppure pienamente nego- ziato» non sarà «come quello di Obama che diede all’Iran un sacco di SOLDI e un cam- mino chiaro e aperto verso un’arma nucleare».
+- Ha poi at- taccato «i perdenti che criti- cano qualcosa che non sanno nemmeno», ricordando che lui non fa «mai accordi nega- tivi».
+- Il presidente viene tirato da una parte e dall’altra da alleati con richieste opposte: i falchi in patria (e Netanyahu) si pre- occupano che l’accordo allen- ti la pressione economica e militare nel momento in cui il regime è più debole; il movi- mento Maga vuole che ponga fine alla guerra e pensi all’eco- nomia; i Paesi del Golfo lo spingono alla diplomazia per evitare nuovi attacchi contro le loro infrastrutture e ripren- dere a vendere petrolio, ma allo stesso tempo non voglio- no un accordo che lasci al- l’Iran l’autorità di gestire lo Stretto e di continuare a usare minacce militari per ottenere ciò che vuole, anche dopo che i militari Usa lasciano la regio- ne.
+- «Non l’ho visto dal vivo, ma le informazioni che ho ripor- tano che ha ferite, ma che è in grado di guidare il Paese».
+============================================================
+
+============================================================
+Timestamp: 2026-05-25 17:14:24
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: Get the current.
+[HumanMessage]: Get the path of the current selected file in Finder and open it as a PDF and summarize.
+[AIMessage]: The path was opened and here is a summary of the document:
+
+Extractive summary of Corriere della Sera 25 Maggio 2026.pdf:
+- a pagina 27 di Monica Guerzoni Vingegaard «frena» la tappa di Milano di Marco Bonarrigo a pagina 40 Giro d’Italia Antonelli fa poker Hamilton secondo di Daniele Sparisci e Giorgio Terruzzi a pagina 41 Formula 1 in Canada di Viviana Mazza e Greta Privitera --- Page 2 --- # 2 Lunedì 25 Maggio 2026 Corriere della Sera Primo piano MedioOriente in fiamme Il premier dal nostro corrispondente Davide Frattini Netanyahu in contropiede spera ancora che salti tutto «So che l’America non cederà sul trasferimento dell’uranio» Trump ora frena sull’intesa L’Iran: nodi da sciogliere La linea del presidente dopo aver annunciato un accordo «quasi fatto»: «Non possiamo avere fretta» DALLA NOSTRA CORRISPONDENTE NEW YORK Il memorandum d’intesa che gli Stati Uniti e l’Iran sarebbero vicini a firma- re prevede un’estensione del cessate il fuoco di 60 giorni, durante i quali lo Stretto di Hormuz verrebbe riaperto senza pedaggi, l’Iran rimuove- rebbe le mine e venderebbe il suo petrolio grazie anche alla sospensione di alcune sanzio- ni.
+- Quando il se- gretario di Stato Rubio, ieri a New Delhi, ha affermato che «sono stati fatti progressi si- gnificativi, ma non finali» e che il mondo non dovrà più aver paura di un’arma nucleare iraniana, l’ambasciata di Tehe- ran in India gli ha risposto ri- badendo il diritto inalienabile allatecnologianucleare.Ilpor- tavoce della Commissione per la sicurezza nazionale del Par- lamento iraniano, Ebrahim Rezaei, ha dichiarato ad Al Ja- zeera che «gli americani devo- no accettare le condizioni del- l’Iran, tra cui la fine della guer- ra, il pagamento di un risarci- mento e la revoca delle sanzioni».
+- © RIPRODUZIONE RISERVATA Corriere.it Le notizie dal mondo, con analisi e aggiornamenti in tempo reale, sul sito del «Corriere della Sera» Sul prato Donald Trump, 79 anni, mentre attraversa il South Lawn, lo spiazzo erboso sul «retro» della Casa Bianca (Afp) dalla nostra corrispondente Viviana Mazza NEW YORK Trump ha detto ieri che non «affretterà un accor- do» per porre fine alla guerra e che bisogna prendersi il tempo («Non possiamo com- mettere errori!»), dopo che una serie di membri del suo partito repubblicano hanno avvertito che potrebbe essere un «errore disastroso».
+- È portato a credere che la crisi dell’economia iraniana offra una leva agli Stati Uniti e spera che Teheran alla fine ceda, anche se tutto indica che la Re- pubblica Islamica «pensi» in modo diverso.
+- Lo stesso Trump è intervenuto su questo: se sabato, dopo una telefonata con i leader del Golfo, aveva scritto su Truth che l’accordo era «ampiamente negoziato», ieri ha riaffermato che se farà «un Il post su Truth Obama no Sul suo social Truth (Verità), Trump scrive che il suo accordo sarà buono, «non come quello fatto da Obama» accordo, che non è stato ancora neppure pienamente nego- ziato» non sarà «come quello di Obama che diede all’Iran un sacco di SOLDI e un cam- mino chiaro e aperto verso un’arma nucleare».
+- Ha poi attaccato «i perdenti che criti- cano qualcosa che non sanno nemmeno», ricordando che lui non fa «mai accordi negativi».
+- Il presidente viene tirato da una parte e dall’altra da alleati con richieste opposte: i falchi in patria (e Netanyahu) si pre- occupano che l’accordo allen- ti la pressione economica e militare nel momento in cui il regime è più debole; il movi- mento Maga vuole che ponga fine alla guerra e pensi all’eco- nomia; i Paesi del Golfo lo spingono alla diplomazia per evitare nuovi attacchi contro le loro infrastrutture e ripren- dere a vendere petrolio, ma allo stesso tempo non voglio- no un accordo che lasci all’Iran l’autorità di gestire lo Stretto e di continuare a usare minacce militari per ottenere ciò che vuole, anche dopo che i militari Usa lasciano la regio- ne.
+- «Non l’ho visto dal vivo, ma le informazioni che ho ripor- tano che ha ferite, ma che è in grado di guidare il Paese».
+[HumanMessage]: light mode
+============================================================
+
+============================================================
+Timestamp: 2026-05-25 17:14:29
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: Get the current.
+[HumanMessage]: Get the path of the current selected file in Finder and open it as a PDF and summarize.
+[AIMessage]: The path was opened and here is a summary of the document:
+
+Extractive summary of Corriere della Sera 25 Maggio 2026.pdf:
+- a pagina 27 di Monica Guerzoni Vingegaard «frena» la tappa di Milano di Marco Bonarrigo a pagina 40 Giro d’Italia Antonelli fa poker Hamilton secondo di Daniele Sparisci e Giorgio Terruzzi a pagina 41 Formula 1 in Canada di Viviana Mazza e Greta Privitera --- Page 2 --- # 2 Lunedì 25 Maggio 2026 Corriere della Sera Primo piano MedioOriente in fiamme Il premier dal nostro corrispondente Davide Frattini Netanyahu in contropiede spera ancora che salti tutto «So che l’America non cederà sul trasferimento dell’uranio» Trump ora frena sull’intesa L’Iran: nodi da sciogliere La linea del presidente dopo aver annunciato un accordo «quasi fatto»: «Non possiamo avere fretta» DALLA NOSTRA CORRISPONDENTE NEW YORK Il memorandum d’intesa che gli Stati Uniti e l’Iran sarebbero vicini a firma- re prevede un’estensione del cessate il fuoco di 60 giorni, durante i quali lo Stretto di Hormuz verrebbe riaperto senza pedaggi, l’Iran rimuove- rebbe le mine e venderebbe il suo petrolio grazie anche alla sospensione di alcune sanzio- ni.
+- Quando il se- gretario di Stato Rubio, ieri a New Delhi, ha affermato che «sono stati fatti progressi si- gnificativi, ma non finali» e che il mondo non dovrà più aver paura di un’arma nucleare iraniana, l’ambasciata di Tehe- ran in India gli ha risposto ri- badendo il diritto inalienabile allatecnologianucleare.Ilpor- tavoce della Commissione per la sicurezza nazionale del Par- lamento iraniano, Ebrahim Rezaei, ha dichiarato ad Al Ja- zeera che «gli americani devo- no accettare le condizioni del- l’Iran, tra cui la fine della guer- ra, il pagamento di un risarci- mento e la revoca delle sanzioni».
+- © RIPRODUZIONE RISERVATA Corriere.it Le notizie dal mondo, con analisi e aggiornamenti in tempo reale, sul sito del «Corriere della Sera» Sul prato Donald Trump, 79 anni, mentre attraversa il South Lawn, lo spiazzo erboso sul «retro» della Casa Bianca (Afp) dalla nostra corrispondente Viviana Mazza NEW YORK Trump ha detto ieri che non «affretterà un accor- do» per porre fine alla guerra e che bisogna prendersi il tempo («Non possiamo com- mettere errori!»), dopo che una serie di membri del suo partito repubblicano hanno avvertito che potrebbe essere un «errore disastroso».
+- È portato a credere che la crisi dell’economia iraniana offra una leva agli Stati Uniti e spera che Teheran alla fine ceda, anche se tutto indica che la Re- pubblica Islamica «pensi» in modo diverso.
+- Lo stesso Trump è intervenuto su questo: se sabato, dopo una telefonata con i leader del Golfo, aveva scritto su Truth che l’accordo era «ampiamente negoziato», ieri ha riaffermato che se farà «un Il post su Truth Obama no Sul suo social Truth (Verità), Trump scrive che il suo accordo sarà buono, «non come quello fatto da Obama» accordo, che non è stato ancora neppure pienamente nego- ziato» non sarà «come quello di Obama che diede all’Iran un sacco di SOLDI e un cam- mino chiaro e aperto verso un’arma nucleare».
+- Ha poi attaccato «i perdenti che criti- cano qualcosa che non sanno nemmeno», ricordando che lui non fa «mai accordi negativi».
+- Il presidente viene tirato da una parte e dall’altra da alleati con richieste opposte: i falchi in patria (e Netanyahu) si pre- occupano che l’accordo allen- ti la pressione economica e militare nel momento in cui il regime è più debole; il movi- mento Maga vuole che ponga fine alla guerra e pensi all’eco- nomia; i Paesi del Golfo lo spingono alla diplomazia per evitare nuovi attacchi contro le loro infrastrutture e ripren- dere a vendere petrolio, ma allo stesso tempo non voglio- no un accordo che lasci all’Iran l’autorità di gestire lo Stretto e di continuare a usare minacce militari per ottenere ciò che vuole, anche dopo che i militari Usa lasciano la regio- ne.
+- «Non l’ho visto dal vivo, ma le informazioni che ho ripor- tano che ha ferite, ma che è in grado di guidare il Paese».
+[HumanMessage]: light mode
+[AIMessage]: 
+[ToolMessage]: Light Mode enabled.
+============================================================
+
+============================================================
+Timestamp: 2026-05-26 16:30:43
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: Earlier text request
+[SystemMessage]: Current native-audio conversation state:
+language: English
+user-emotional-tone: calm
+last-request-context: Asked to summarize the screen
+context-data: The user is working on a Viva request and wants screen-aware help.
+Use this memory to resolve follow-up audio requests, pronouns, and references to the user's recent context.
+[HumanMessage]:
+  - Text: Analyze the audio.
+  - Audio: [base64 audio data, mime=audio/wav (truncated)]
+============================================================
+
+============================================================
+Timestamp: 2026-05-26 16:36:43
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: ciao
+============================================================
+
+============================================================
+Timestamp: 2026-05-26 16:37:58
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: ciao
+[AIMessage]: Ciao! Come posso aiutarti?
+[SystemMessage]: Current native-audio conversation state:
+language: Italian
+user-emotional-tone: neutral
+last-request-context: The user wants to open the music application.
+context-data: User greeted the assistant in Italian. The user is now requesting to open the music application.
+Use this memory to resolve follow-up audio requests, pronouns, and references to the user's recent context.
+[HumanMessage]:
+  - Text: Respond to the user request.
+  - Audio: [base64 audio data, mime=audio/wav (truncated)]
+============================================================
+
+============================================================
+Timestamp: 2026-05-26 16:39:26
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Ciao! Come posso aiutarti?
+[HumanMessage]: Respond to the user request.
+[AIMessage]: Non ho un comando per aprire l'applicazione direttamente, ma posso controllare la riproduzione musicale per te. Cosa vorresti fare?
+[SystemMessage]: Current native-audio conversation state:
+language: Italian
+user-emotional-tone: neutral
+last-request-context: The user is asking to play some music.
+context-data: User greeted the assistant in Italian. The user previously requested to open the music application. The assistant explained they could control playback but not open the app directly. The user is now requesting to play music.
+Use this memory to resolve follow-up audio requests, pronouns, and references to the user's recent context.
+[HumanMessage]:
+  - Text: Respond to the user request.
+  - Audio: [base64 audio data, mime=audio/wav (truncated)]
+============================================================
+
+============================================================
+Timestamp: 2026-05-26 16:40:23
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Ciao! Come posso aiutarti?
+[HumanMessage]: Respond to the user request.
+[AIMessage]: Non ho un comando per aprire l'applicazione direttamente, ma posso controllare la riproduzione musicale per te. Cosa vorresti fare?
+[SystemMessage]: Current native-audio conversation state:
+language: Italian
+user-emotional-tone: neutral
+last-request-context: The user is asking to play some music.
+context-data: User greeted the assistant in Italian. The user previously requested to open the music application. The assistant explained they could control playback but not open the app directly. The user is now requesting to play music.
+Use this memory to resolve follow-up audio requests, pronouns, and references to the user's recent context.
+[HumanMessage]:
+  - Text: Respond to the user request.
+  - Audio: [base64 audio data, mime=audio/wav (truncated)]
+[AIMessage]: 
+[ToolMessage]: Playing recommended Music playlist: Replay 2021
+============================================================
+
+============================================================
+Timestamp: 2026-05-29 19:34:38
+=== PROMPT SENT TO MODEL ===
+[SystemMessage]: Current native-audio conversation state:
+language: Italian
+user-emotional-tone: Neutral
+last-request-context: Download a YouTube video from the clipboard.
+context-data: User requested to download a YouTube video from the clipboard.
+Use this memory to resolve follow-up audio requests, pronouns, and references to the user's recent context.
+[HumanMessage]:
+  - Text: Respond to the user request.
+  - Audio: [base64 audio data, mime=audio/wav (truncated)]
+============================================================
+
+============================================================
+Timestamp: 2026-05-29 19:35:21
+=== PROMPT SENT TO MODEL ===
+[SystemMessage]: Current native-audio conversation state:
+language: Italian
+user-emotional-tone: Neutral
+last-request-context: Download a YouTube video from the clipboard.
+context-data: User requested to download a YouTube video from the clipboard.
+Use this memory to resolve follow-up audio requests, pronouns, and references to the user's recent context.
+[HumanMessage]:
+  - Text: Respond to the user request.
+  - Audio: [base64 audio data, mime=audio/wav (truncated)]
+[AIMessage]: 
+[ToolMessage]: https://youtube.com/shorts/thhgQD1i4vw?is=FG6Qh3lawB5FBcYj
+============================================================
+
+============================================================
+Timestamp: 2026-05-29 19:35:31
+=== PROMPT SENT TO MODEL ===
+[SystemMessage]: Current native-audio conversation state:
+language: Italian
+user-emotional-tone: Neutral
+last-request-context: Download a YouTube video from the clipboard.
+context-data: User requested to download a YouTube video from the clipboard.
+Use this memory to resolve follow-up audio requests, pronouns, and references to the user's recent context.
+[HumanMessage]:
+  - Text: Respond to the user request.
+  - Audio: [base64 audio data, mime=audio/wav (truncated)]
+[AIMessage]: 
+[ToolMessage]: https://youtube.com/shorts/thhgQD1i4vw?is=FG6Qh3lawB5FBcYj
+[AIMessage]: 
+[ToolMessage]: Downloaded YouTube video to /Users/savioscibetta/Downloads/🤣 Lushious Tell Trixie How She Controls Her Obesity Demon #shorts #trixieandkatya #unhhhh #drag [thhgQD1i4vw].mp4 (6.2 MB).
+============================================================
+
+============================================================
+Timestamp: 2026-05-29 19:37:16
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: Respond to the user request.
+[AIMessage]: Ok ho scaricato il video di YouTube. Lo trovi nella cartella Download.
+[SystemMessage]: Current native-audio conversation state:
+language: Italian
+user-emotional-tone: Neutral
+last-request-context: Download a YouTube video from the clipboard.
+context-data: User requested to download a YouTube video from the clipboard.
+Use this memory to resolve follow-up audio requests, pronouns, and references to the user's recent context.
+[HumanMessage]: puoi convertirlo in un formato che è compatibile con l'iPhone perché per qualche motivo non mi si vede
+============================================================
+
