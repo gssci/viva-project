@@ -76,16 +76,9 @@ def generate_and_verify_applescript(user_query: str, max_retries: int = 2) -> st
     Generates an AppleScript using an LLM, verifies it, and retries upon failure.
     """
     llm = ChatOpenAI(
-        base_url=os.getenv(
-            "VIVA_LLM_BASE_URL",
-            os.getenv("VIVA_OMLX_BASE_URL", "http://127.0.0.1:8000/v1"),
-        ),
-        api_key=os.getenv(
-            "VIVA_LLM_API_KEY", os.getenv("VIVA_OMLX_API_KEY", "not-needed")
-        ),
-        model=os.getenv(
-            "VIVA_LLM_MODEL", os.getenv("VIVA_OMLX_MODEL", "gemma-4-E4B-it-Q4_K_M.gguf")
-        ),
+        base_url=os.getenv("VIVA_LLM_BASE_URL", "http://127.0.0.1:1234/v1"),
+        api_key=os.getenv("VIVA_LLM_API_KEY", "lm-studio"),
+        model=os.getenv("VIVA_LLM_MODEL", "google/google/gemma-4-e4b"),
     )
 
     system_instruction = (

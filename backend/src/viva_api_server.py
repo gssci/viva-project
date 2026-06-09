@@ -1,7 +1,9 @@
 import asyncio
 import logging
 import os
+import signal
 import tempfile
+import threading
 import time
 import uuid
 from concurrent.futures import ThreadPoolExecutor
@@ -38,6 +40,8 @@ DEFAULT_TTS_VOICE_GENDER = os.getenv("VIVA_TTS_VOICE_GENDER", "female")
 SUPPORTED_TTS_VOICE_GENDERS = {"male", "female"}
 BACKEND_HOST = os.getenv("VIVA_BACKEND_HOST", "127.0.0.1")
 BACKEND_PORT = int(os.getenv("VIVA_BACKEND_PORT", "8001"))
+BACKEND_RELOAD = os.getenv("VIVA_BACKEND_RELOAD", "0") == "1"
+PARENT_PID = int(os.getenv("VIVA_PARENT_PID", "0") or "0")
 _END_OF_STREAM = object()
 
 
@@ -79,6 +83,38 @@ def _next_tts_chunk(chunk_iterator: Iterator):
         return _END_OF_STREAM
 
 
+def _parent_process_is_running(parent_pid: int) -> bool:
+    try:
+        os.kill(parent_pid, 0)
+    except ProcessLookupError:
+        return False
+    except PermissionError:
+        return True
+
+    return True
+
+
+def _start_parent_process_watchdog(parent_pid: int) -> None:
+    if parent_pid <= 0:
+        return
+
+    def watch_parent_process() -> None:
+        while True:
+            if not _parent_process_is_running(parent_pid):
+                logger.info(
+                    "Parent process %s exited. Shutting down backend.", parent_pid
+                )
+                os.kill(os.getpid(), signal.SIGTERM)
+                return
+            time.sleep(1)
+
+    threading.Thread(
+        target=watch_parent_process,
+        name="viva-parent-watchdog",
+        daemon=True,
+    ).start()
+
+
 # --- 2. Startup Event (Model Pre-loading) ---
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -115,6 +151,20 @@ async def lifespan(app: FastAPI):
     yield
 
     logger.info("Server shutting down.")
+    async with app.state.active_viva_task_lock:
+        active_tasks = list(app.state.active_viva_tasks.values())
+        app.state.active_viva_tasks.clear()
+
+    for task in active_tasks:
+        if task is not None and not task.done():
+            task.cancel()
+
+    if active_tasks:
+        await asyncio.gather(*active_tasks, return_exceptions=True)
+
+    async with app.state.pending_tts_stream_lock:
+        app.state.pending_tts_streams.clear()
+
     app.state.tts_executor.shutdown(wait=False, cancel_futures=True)
 
 
@@ -463,7 +513,10 @@ async def transcribe(file: UploadFile = File(...)):
 
 
 if __name__ == "__main__":
-    # Standard Uvicorn startup
+    _start_parent_process_watchdog(PARENT_PID)
     uvicorn.run(
-        "viva_api_server:app", host=BACKEND_HOST, port=BACKEND_PORT, reload=True
+        "viva_api_server:app",
+        host=BACKEND_HOST,
+        port=BACKEND_PORT,
+        reload=BACKEND_RELOAD,
     )

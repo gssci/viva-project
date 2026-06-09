@@ -518,3 +518,163 @@ Use this memory to resolve follow-up audio requests, pronouns, and references to
 [HumanMessage]: puoi convertirlo in un formato che è compatibile con l'iPhone perché per qualche motivo non mi si vede
 ============================================================
 
+============================================================
+Timestamp: 2026-06-08 19:14:24
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: scarica questo video: https://www.youtube.com/watch?v=yJtckcMHM2g
+============================================================
+
+============================================================
+Timestamp: 2026-06-08 19:15:39
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: scarica questo video: https://www.youtube.com/watch?v=yJtckcMHM2g
+[AIMessage]: 
+[ToolMessage]: Downloaded YouTube video to /Users/savioscibetta/Downloads/Madonna - ＂Confessions II - The Film＂ [yJtckcMHM2g].mp4 (116.5 MB).
+============================================================
+
+============================================================
+Timestamp: 2026-06-08 19:16:18
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: scarica questo video: https://www.youtube.com/watch?v=yJtckcMHM2g
+[AIMessage]: Il video è stato scaricato con successo in /Users/savioscibetta/Downloads/Madonna - ＂Confessions II - The Film＂ [yJtckcMHM2g].mp4.
+[HumanMessage]: crea una copia del file convertita in mp3
+============================================================
+
+============================================================
+Timestamp: 2026-06-08 19:16:58
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Il video è stato scaricato con successo in /Users/savioscibetta/Downloads/Madonna - ＂Confessions II - The Film＂ [yJtckcMHM2g].mp4.
+[HumanMessage]: crea una copia del file convertita in mp3
+[AIMessage]: Devi selezionare il file MP4 in Finder prima di chiedere la conversione in MP3.
+[HumanMessage]: è selezionato
+============================================================
+
+============================================================
+Timestamp: 2026-06-08 19:17:14
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Il video è stato scaricato con successo in /Users/savioscibetta/Downloads/Madonna - ＂Confessions II - The Film＂ [yJtckcMHM2g].mp4.
+[HumanMessage]: crea una copia del file convertita in mp3
+[AIMessage]: Devi selezionare il file MP4 in Finder prima di chiedere la conversione in MP3.
+[HumanMessage]: è selezionato
+[AIMessage]: 
+[ToolMessage]: Successfully converted 'Madonna - ＂Confessions II - The Film＂ [yJtckcMHM2g].mp4' to 'Madonna - ＂Confessions II - The Film＂ [yJtckcMHM2g].mp3'.
+============================================================
+
+============================================================
+Timestamp: 2026-06-09 12:15:36
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: ciao
+============================================================
+
+============================================================
+Timestamp: 2026-06-09 12:16:37
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: ciao
+[HumanMessage]: ciao
+============================================================
+
+============================================================
+Timestamp: 2026-06-09 12:17:22
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: ciao
+[HumanMessage]: ciao
+[AIMessage]: Ciao! Come posso aiutarti?
+[HumanMessage]: modalità scura
+============================================================
+
+============================================================
+Timestamp: 2026-06-09 12:17:35
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: ciao
+[HumanMessage]: ciao
+[AIMessage]: Ciao! Come posso aiutarti?
+[HumanMessage]: modalità scura
+[AIMessage]: 
+[ToolMessage]: Dark Mode enabled.
+============================================================
+
+============================================================
+Timestamp: 2026-06-09 12:18:31
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Ciao! Come posso aiutarti?
+[HumanMessage]: modalità scura
+[AIMessage]: Ho attivato la modalità scura.
+[HumanMessage]: che fai domani?
+============================================================
+
+============================================================
+Timestamp: 2026-06-09 12:19:09
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Ho attivato la modalità scura.
+[HumanMessage]: che fai domani?
+[AIMessage]: Io sono un'intelligenza artificiale, quindi non ho impegni o programmi come voi, ma domani sarò qui, pronto ad aiutarti! E tu, hai già dei piani?
+[HumanMessage]: dimmelo tu, controlla il mio calendario
+============================================================
+
+============================================================
+Timestamp: 2026-06-09 12:19:36
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Ho attivato la modalità scura.
+[HumanMessage]: che fai domani?
+[AIMessage]: Io sono un'intelligenza artificiale, quindi non ho impegni o programmi come voi, ma domani sarò qui, pronto ad aiutarti! E tu, hai già dei piani?
+[HumanMessage]: dimmelo tu, controlla il mio calendario
+[AIMessage]: 
+[ToolMessage]: 2026-06-09 12:19:36
+============================================================
+
+============================================================
+Timestamp: 2026-06-09 12:19:53
+=== PROMPT SENT TO MODEL ===
+[AIMessage]: Ho attivato la modalità scura.
+[HumanMessage]: che fai domani?
+[AIMessage]: Io sono un'intelligenza artificiale, quindi non ho impegni o programmi come voi, ma domani sarò qui, pronto ad aiutarti! E tu, hai già dei piani?
+[HumanMessage]: dimmelo tu, controlla il mio calendario
+[AIMessage]: 
+[ToolMessage]: 2026-06-09 12:19:36
+[AIMessage]: 
+[ToolMessage]: - Dino SALVAGIO  | mercoledì 10 giugno 2026 alle ore 17:00:00 - mercoledì 10 giugno 2026 alle ore 18:00:00 | Lavoro | uid: 6361A821-C4CA-463D-877A-B242C963022B
+============================================================
+
+============================================================
+Timestamp: 2026-06-09 12:32:46
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: are you ready?
+============================================================
+
+============================================================
+Timestamp: 2026-06-09 12:33:22
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: are you ready?
+[HumanMessage]: are you ready? It's MOTHA
+============================================================
+
+============================================================
+Timestamp: 2026-06-09 12:53:24
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: ciao
+============================================================
+
+============================================================
+Timestamp: 2026-06-09 12:54:40
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: ciao
+============================================================
+
+============================================================
+Timestamp: 2026-06-09 12:55:12
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: ciao
+[AIMessage]: Ciao.
+[HumanMessage]: modalità scura
+============================================================
+
+============================================================
+Timestamp: 2026-06-09 12:55:27
+=== PROMPT SENT TO MODEL ===
+[HumanMessage]: ciao
+[AIMessage]: Ciao.
+[HumanMessage]: modalità scura
+[AIMessage]: 
+[ToolMessage]: Dark Mode enabled.
+============================================================
+

@@ -26,15 +26,9 @@ from langchain_core.runnables import RunnableConfig
 
 logger = logging.getLogger(__name__)
 
-LLM_MODEL = os.getenv(
-    "VIVA_LLM_MODEL", os.getenv("VIVA_OMLX_MODEL", "gemma-4-E4B-it-Q4_K_M.gguf")
-)
-LLM_BASE_URL = os.getenv(
-    "VIVA_LLM_BASE_URL", os.getenv("VIVA_OMLX_BASE_URL", "http://127.0.0.1:8000/v1")
-)
-LLM_API_KEY = os.getenv(
-    "VIVA_LLM_API_KEY", os.getenv("VIVA_OMLX_API_KEY", "not-needed")
-)
+LLM_MODEL = os.getenv("VIVA_LLM_MODEL", "google/google/gemma-4-e4b")
+LLM_BASE_URL = os.getenv("VIVA_LLM_BASE_URL", "http://127.0.0.1:1234/v1")
+LLM_API_KEY = os.getenv("VIVA_LLM_API_KEY", "lm-studio")
 DEFAULT_IMAGE_MIME_TYPE = "image/jpeg"
 DEFAULT_AUDIO_MIME_TYPE = "audio/wav"
 MAX_HISTORY_MESSAGES = 3
@@ -169,8 +163,7 @@ def _content_has_block_type(content: Any, block_type: str) -> bool:
     if not isinstance(content, list):
         return False
     return any(
-        isinstance(block, dict) and block.get("type") == block_type
-        for block in content
+        isinstance(block, dict) and block.get("type") == block_type for block in content
     )
 
 
@@ -533,8 +526,9 @@ class VivaAgentService:
                 checkpointer=InMemorySaver(),
             )
             logger.info(
-                "Viva agent initialized with LLM model '%s' via llama-server.",
+                "Viva agent initialized with LLM model '%s' at '%s'.",
                 LLM_MODEL,
+                LLM_BASE_URL,
             )
 
     async def run(

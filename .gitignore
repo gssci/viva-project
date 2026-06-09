@@ -14,3 +14,6 @@ backend/models/
 
 # macOS
 .DS_Store
+.logs/agent_prompts.txt
+.logs/agent_prompts.txt
+/.logs

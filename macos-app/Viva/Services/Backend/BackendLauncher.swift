@@ -1,3 +1,4 @@
+import Darwin
 import Foundation
 
 final class BackendLauncher {
@@ -50,8 +51,21 @@ final class BackendLauncher {
     }
 
     func stop() {
-        guard let process, process.isRunning else { return }
-        process.terminate()
+        guard let process else { return }
+
+        let processID = process.processIdentifier
+        Self.sendSignal(SIGTERM, toProcessTreeRootedAt: processID)
+
+        let timeout = Date().addingTimeInterval(3)
+        while process.isRunning && Date() < timeout {
+            Thread.sleep(forTimeInterval: 0.05)
+        }
+
+        if process.isRunning {
+            Self.sendSignal(SIGKILL, toProcessTreeRootedAt: processID)
+            process.waitUntilExit()
+        }
+
         self.process = nil
     }
 
@@ -67,7 +81,45 @@ final class BackendLauncher {
             "/sbin"
         ]
         environment["PATH"] = pathEntries.compactMap { $0 }.joined(separator: ":")
+        environment["VIVA_PARENT_PID"] = String(ProcessInfo.processInfo.processIdentifier)
         return environment
+    }
+
+    private static func sendSignal(_ signal: Int32, toProcessTreeRootedAt processID: Int32) {
+        let descendants = descendantProcessIDs(of: processID)
+        for childProcessID in descendants.reversed() {
+            kill(childProcessID, signal)
+        }
+        kill(processID, signal)
+    }
+
+    private static func descendantProcessIDs(of processID: Int32) -> [Int32] {
+        let directChildren = childProcessIDs(of: processID)
+        return directChildren + directChildren.flatMap { descendantProcessIDs(of: $0) }
+    }
+
+    private static func childProcessIDs(of processID: Int32) -> [Int32] {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/pgrep")
+        process.arguments = ["-P", String(processID)]
+
+        let outputPipe = Pipe()
+        process.standardOutput = outputPipe
+        process.standardError = Pipe()
+
+        do {
+            try process.run()
+        } catch {
+            return []
+        }
+
+        process.waitUntilExit()
+        let output = outputPipe.fileHandleForReading.readDataToEndOfFile()
+        guard let text = String(data: output, encoding: .utf8) else { return [] }
+
+        return text
+            .split(whereSeparator: \.isNewline)
+            .compactMap { Int32($0.trimmingCharacters(in: .whitespacesAndNewlines)) }
     }
 
     private static func resolveBackendDirectory() -> URL? {
