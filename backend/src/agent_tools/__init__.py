@@ -18,7 +18,12 @@ from .pdf_tools import (
     split_pdf_pages,
     summarize_pdf,
 )
+from .soundcloud_tools import (
+    download_soundcloud_audio,
+    soundcloud_tools,
+)
 from .youtube_tools import (
+    download_youtube_audio_mp3,
     download_youtube_video,
     youtube_tools,
 )
@@ -27,6 +32,7 @@ from .youtube_tools import (
 all_agent_tools = [
     *general_tools,
     *pdf_tools,
+    *soundcloud_tools,
     *youtube_tools,
     *all_mac_tools,
 ]
@@ -49,6 +55,9 @@ __all__ = [
     "search_pdf_text",
     "split_pdf_pages",
     "summarize_pdf",
+    "download_soundcloud_audio",
+    "soundcloud_tools",
+    "download_youtube_audio_mp3",
     "download_youtube_video",
     "youtube_tools",
     "web_search",
