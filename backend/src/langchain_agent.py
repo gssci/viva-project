@@ -26,12 +26,12 @@ from langchain_core.runnables import RunnableConfig
 
 logger = logging.getLogger(__name__)
 
-LLM_MODEL = os.getenv("VIVA_LLM_MODEL", "google/google/gemma-4-e4b")
+LLM_MODEL = os.getenv("VIVA_LLM_MODEL", "gemma-4-e4b-it-4bit")
 LLM_BASE_URL = os.getenv("VIVA_LLM_BASE_URL", "http://127.0.0.1:1234/v1")
-LLM_API_KEY = os.getenv("VIVA_LLM_API_KEY", "lm-studio")
+LLM_API_KEY = os.getenv("VIVA_LLM_API_KEY", "ollm")
 DEFAULT_IMAGE_MIME_TYPE = "image/jpeg"
 DEFAULT_AUDIO_MIME_TYPE = "audio/wav"
-MAX_HISTORY_MESSAGES = 3
+MAX_HISTORY_MESSAGES = 5
 NATIVE_AUDIO_STATE_PREFIX = "Current native-audio conversation state"
 
 VivaAgentState = TypedDict(
@@ -143,8 +143,8 @@ def _build_user_message(
                 },
             }
         )
-
-    return HumanMessage(content=content_blocks)
+    
+    return HumanMessage(content=reversed(content_blocks))
 
 
 def _context_llm() -> ChatOpenAI:

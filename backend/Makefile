@@ -1,7 +1,7 @@
 BACKEND_HOST ?= 127.0.0.1
 BACKEND_PORT ?= 8001
 BACKEND_BASE_URL ?= http://$(BACKEND_HOST):$(BACKEND_PORT)
-VIVA_LLM_MODEL ?= google/google/gemma-4-e4b
+VIVA_LLM_MODEL ?= google/gemma-4-e4b
 VIVA_LLM_BASE_URL ?= http://127.0.0.1:1234/v1
 VIVA_LLM_API_KEY ?= lm-studio
 

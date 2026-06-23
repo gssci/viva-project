@@ -1,4 +1,5 @@
 import asyncio
+import json
 import logging
 import os
 import shutil
@@ -223,7 +224,41 @@ def _find_downloaded_mp3(
     return None
 
 
-def _overwrite_with_h264_mp4(mp4_path: Path) -> None:
+def _probe_video_stream(mp4_path: Path) -> tuple[str, int, int]:
+    command = [
+        "ffprobe",
+        "-v",
+        "error",
+        "-select_streams",
+        "v:0",
+        "-show_entries",
+        "stream=codec_name,width,height",
+        "-of",
+        "json",
+        str(mp4_path),
+    ]
+    completed = subprocess.run(command, capture_output=True, text=True, check=False)
+    if completed.returncode != 0:
+        details = (completed.stderr or completed.stdout).strip()
+        raise RuntimeError(f"ffprobe failed for {mp4_path}: {details}")
+
+    try:
+        payload = json.loads(completed.stdout)
+        stream = payload["streams"][0]
+        codec_name = str(stream["codec_name"]).lower()
+        width = int(stream["width"])
+        height = int(stream["height"])
+    except (KeyError, IndexError, TypeError, ValueError, json.JSONDecodeError) as exc:
+        raise RuntimeError(f"Unable to inspect video stream for {mp4_path}.") from exc
+
+    return codec_name, width, height
+
+
+def _ensure_h264_mp4(mp4_path: Path) -> bool:
+    original_codec, original_width, original_height = _probe_video_stream(mp4_path)
+    if original_codec == "h264":
+        return False
+
     fd, temp_name = tempfile.mkstemp(
         prefix=f".{mp4_path.stem}.h264.",
         suffix=".mp4",
@@ -247,15 +282,15 @@ def _overwrite_with_h264_mp4(mp4_path: Path) -> None:
             "-c:v",
             "libx264",
             "-preset",
-            "medium",
+            "slow",
             "-crf",
-            "20",
+            "14",
             "-pix_fmt",
             "yuv420p",
             "-c:a",
             "aac",
             "-b:a",
-            "192k",
+            "320k",
             "-movflags",
             "+faststart",
             str(temp_path),
@@ -264,7 +299,23 @@ def _overwrite_with_h264_mp4(mp4_path: Path) -> None:
         if completed.returncode != 0:
             details = (completed.stderr or completed.stdout).strip()
             raise RuntimeError(f"ffmpeg h.264 conversion failed: {details}")
+
+        converted_codec, converted_width, converted_height = _probe_video_stream(
+            temp_path
+        )
+        if converted_codec != "h264":
+            raise RuntimeError(
+                f"ffmpeg conversion produced {converted_codec}, not h.264."
+            )
+        if (converted_width, converted_height) != (original_width, original_height):
+            raise RuntimeError(
+                "ffmpeg h.264 conversion changed resolution from "
+                f"{original_width}x{original_height} to "
+                f"{converted_width}x{converted_height}."
+            )
+
         os.replace(temp_path, mp4_path)
+        return True
     finally:
         temp_path.unlink(missing_ok=True)
 
@@ -311,11 +362,16 @@ def _download_youtube_video_blocking(
         )
 
     mp4_path = _sanitize_download_path(mp4_path, "mp4")
-    logger.info("Converting YouTube video to h.264 mp4 with ffmpeg: %s", mp4_path)
-    _overwrite_with_h264_mp4(mp4_path)
+    logger.info("Checking YouTube video codec before h.264 conversion: %s", mp4_path)
+    converted_to_h264 = _ensure_h264_mp4(mp4_path)
 
     size_mb = mp4_path.stat().st_size / (1024 * 1024)
-    return f"Downloaded YouTube video to {mp4_path} ({size_mb:.1f} MB, h.264 mp4)."
+    conversion_status = (
+        "converted to high-quality h.264 mp4"
+        if converted_to_h264
+        else "already h.264 mp4; original video stream kept"
+    )
+    return f"Downloaded YouTube video to {mp4_path} ({size_mb:.1f} MB, {conversion_status})."
 
 
 def _download_youtube_audio_blocking(

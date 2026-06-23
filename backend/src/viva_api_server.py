@@ -20,6 +20,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.staticfiles import StaticFiles
 
 from langchain_agent import VivaAgentService
+from vector_store import VectorStoreManager
 from tools.tts_common import PCM_STREAM_CONTENT_TYPE
 from tools.tts_factory import DEFAULT_OUTPUT_DIR, create_tts_service
 
@@ -127,6 +128,11 @@ async def lifespan(app: FastAPI):
     await asyncio.to_thread(_warm_up_whisper_model)
     app.state.viva_service = VivaAgentService()
     await app.state.viva_service.initialize()
+    
+    # Initialize the persistent local vector database with tool definitions
+    app.state.vector_store_manager = VectorStoreManager()
+    asyncio.create_task(app.state.vector_store_manager.initialize_vector_db())
+
     app.state.tts_service = create_tts_service(output_dir=TTS_OUTPUT_DIR)
     app.state.tts_executor = ThreadPoolExecutor(
         max_workers=1,
